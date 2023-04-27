@@ -69,5 +69,5 @@ function isFormValid(inputs){
 }
 
 function registerNewUser(inputs){
-    axios.post(baseUrl, inputs).then((response) => {Console.log(response.data)}).catch((err) => {Console.log(err)})
+    axios.post(baseUrl, {'newUser':inputs}).then((response) => {Console.log(response.data)}).catch((err) => {Console.log(err)})
 }
