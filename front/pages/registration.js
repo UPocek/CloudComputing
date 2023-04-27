@@ -69,6 +69,6 @@ function isFormValid(inputs) {
     return true;
 }
 
-function registerNewUser(inputs) {
-    axios.post(baseUrl, { 'newUser': inputs }).then((response) => { console.log(response.data) }).catch((err) => { console.log(err) })
+function registerNewUser(inputs, router) {
+    axios.post(`${baseUrl}/api/registration`, { 'newUser': inputs }).then((response) => { localStorage.setItem('user', response.data); router.replace('/') }).catch((err) => { alert(err) })
 }

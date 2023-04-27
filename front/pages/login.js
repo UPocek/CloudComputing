@@ -1,8 +1,10 @@
 import styles from "../styles/Login.module.css"
 import axios from "axios"
 import { baseUrl } from "./_app"
+import { useRouter } from "next/router";
 
 export default function LoginPage() {
+    const router = useRouter();
 
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -11,7 +13,7 @@ export default function LoginPage() {
         if (username == '' || password == '') {
             alert("You didn't fill out the form properly. Try again.");
         } else {
-            login({ username: username, password: password })
+            login({ username: username, password: password }, router)
         }
     }
     return <div className={styles.registrationDiv}>
@@ -36,6 +38,6 @@ export default function LoginPage() {
     </div>
 }
 
-function login(credentials) {
-    axios.post(`${baseUrl}/api/login`, credentials).then((response) => { console.log(response.data) }).catch((err) => { console.log(err) })
+function login(credentials, router) {
+    axios.post(`${baseUrl}/api/login`, credentials).then((response) => { localStorage.setItem('user', response.data); router.replace('/') }).catch((err) => { console.log(err) })
 }

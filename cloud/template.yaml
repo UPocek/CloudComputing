@@ -9,6 +9,13 @@ Description: >
 #     Timeout: 3
 #     MemorySize: 128
 
+Globals:
+    Api:
+        Cors:
+          AllowHeaders: "'*'"
+          AllowMethods: "'*'"
+          AllowOrigin: "'*'"
+
 Resources:
   RegistrationFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction

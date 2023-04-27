@@ -2,13 +2,19 @@ import json
 import boto3
 import random
 
+client = boto3.resource("dynamodb")
+user_table = client.Table("User")
 
 def registration_lambda(event, context):
-    client = boto3.resource("dynamodb")
-    user_table = client.Table("User")
 
+    body = event.get('body')
     
-    newUser = event.get("newUser")
+    if body is None:
+        return bed_request("Required parameters missing")
+    
+    body = json.loads(body)
+        
+    newUser = body.get("newUser")
     if newUser is None:
         return bed_request("Required parameters missing")
     if(set(newUser.keys()) != set(['name', 'surname', 'birthday', 'username', 'email', 'password'])):
@@ -28,6 +34,11 @@ def registration_lambda(event, context):
 def bed_request(message):
     return {
         "statusCode": 400,
+        "headers": {
+        "Access-Control-Allow-Headers" : "Content-Type",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST"
+    },
         "body": json.dumps({"message": message}),
     }
 
@@ -36,6 +47,11 @@ def successfull_registration(user):
     del user["password"]
     return {
         "statusCode": 200,
+        "headers": {
+        "Access-Control-Allow-Headers" : "Content-Type",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST"
+    },
         "body": json.dumps(user),
     }
 
@@ -45,3 +61,4 @@ def get_random_avatar(user):
     else:
         letter = random.choice(['m', 'f'])
     return letter + str(random.randint(0,7))
+
