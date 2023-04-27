@@ -1,18 +1,6 @@
 import json
 import boto3
 
-def bed_request(message):
-    return {
-        "statusCode": 400,
-        "body": json.dumps({
-            "message": message
-        }),
-        }
-
-successfull_login = {
-        "statusCode": 200
-    }
-
 client = boto3.resource('dynamodb')
 user_table = client.Table('User')
 
@@ -32,4 +20,18 @@ def login_lambda(event, context):
         
     # JWT logic 
                 
-    return successfull_login
+    return successfull_login(user)
+
+def bed_request(message):
+    return {
+        "statusCode": 400,
+        "body": json.dumps({
+            "message": message
+        }),
+        }
+
+def successfull_login(user):
+    return {
+        "statusCode": 200,
+        "body": json.dumps(user),
+    }
