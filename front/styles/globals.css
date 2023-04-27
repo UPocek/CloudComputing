@@ -1,29 +1,29 @@
 /* GLOBAL */
 * {
-    box-sizing: border-box;
-  }
-  
-  :root {
-    --bgColor: rgb(0,142,239);
-    --DarkGray: #333;
-  }
-  
-  body {
-    background: var(--bgColor);
-    background: linear-gradient(335deg, rgba(0,142,239,1) 35%, rgba(133,210,248,1) 100%);
-    font-family: 'Rubik', sans-serif;
-    line-height: 1.6;
-    margin: 0;
-    overflow-x: hidden;
-  }
-  
-  /* Header */
-  @media (max-width:1069px) {
-  
-    /* TABLET size*/
-  }
-  
-  @media (max-width:768px) {
-  
-    /* PHONE size*/
-  }
+  box-sizing: border-box;
+}
+
+:root {
+  --bgColor: rgb(0, 142, 239);
+  --DarkGray: #333;
+}
+
+body {
+  background: var(--bgColor);
+  /* background: linear-gradient(335deg, rgba(0,142,239,1) 35%, rgba(133,210,248,1) 100%); */
+  font-family: 'Rubik', sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+/* Header */
+@media (max-width:1069px) {
+
+  /* TABLET size*/
+}
+
+@media (max-width:768px) {
+
+  /* PHONE size*/
+}

@@ -1,0 +1,66 @@
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    width: 60%;
+    margin: 10vh auto;
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.card_body {
+    padding: 20px;
+}
+
+.card_nav {
+    padding: 10px 30px;
+    margin: 0;
+    background-color: rgba(160, 199, 248, 0.8);
+    overflow: hidden;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.card_large {
+    grid-column: 2 / 4;
+}
+
+.card_small {}
+
+.card h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    letter-spacing: .13px;
+    margin: 10px auto;
+}
+
+.card h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.card h4 {
+    font-size: 1.1rem;
+    font-weight: 400;
+    opacity: .7;
+    letter-spacing: -.27px;
+}
+
+.card h5 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: .23px;
+}
+
+.avatar_section {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
