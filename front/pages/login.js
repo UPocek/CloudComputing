@@ -3,7 +3,7 @@ import styles from "../styles/Registration.module.css"
 import axios from "axios"
 import { baseUrl } from "./_app"
 
-export default function RegistrationPage() {
+export default function LoginPage() {
     const ref = useRef(null)
     const [inputs, setInputs] = useState({});
 
@@ -14,13 +14,13 @@ export default function RegistrationPage() {
     }
 
     const handleSubmit = (event) => {
-        event.preventDefault();
-
-        if (isFormValid(inputs)) {
-            registerNewUser(inputs)
-        } else {
-            alert("You didn't fill out the form properly. Try again.");
-        }
+        console.log(event.target.name);
+        // event.preventDefault();
+        // if (isFormValid(inputs)) {
+        //     registerNewUser(inputs)
+        // } else {
+        //     alert("You didn't fill out the form properly. Try again.");
+        // }
     }
     return <div className={styles.registrationDiv}>
         <form className={styles.registrationForm} onSubmit={handleSubmit}>
@@ -30,10 +30,10 @@ export default function RegistrationPage() {
             </div>
             <div className={`${styles.nameDiv} ${styles.inputDiv}`}>
                 <div className={styles.innerNameDiv}>
-                    <input className={styles.inputField} type="text" id="name" name="name" value={inputs.name || ""} onChange={handleChange} placeholder="Name"></input>
+                    <input className={styles.inputField} id="name" name="name" value={inputs.name || ""} onChange={handleChange} placeholder="Name"></input>
                 </div>
                 <div>
-                    <input className={styles.inputField} type="text" id="surname" name="surname" value={inputs.surname || ""} onChange={handleChange} placeholder="Surame"></input>
+                    <input className={styles.inputField} id="surname" name="surname" value={inputs.surname || ""} onChange={handleChange} placeholder="Surame"></input>
                 </div>
             </div>
             <div className={styles.inputDiv}>
