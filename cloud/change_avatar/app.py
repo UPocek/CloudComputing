@@ -7,10 +7,12 @@ user_table = client.Table('User')
 def change_avatar_lambda(event, context):
     
     path_parameters = event.get('pathParameters')
-    new_avatar = event.get('avatar')
+    new_avatar = json.loads(event.get('body', '{}')).get('avatar')
+    
+    print(new_avatar)
     
     if path_parameters is None or path_parameters.get('username') is None or new_avatar is None:
-        return bed_request("Missing required username parameter")
+        return bed_request("Missing required parameters")
     
     username = path_parameters['username']
     
@@ -38,8 +40,8 @@ def bed_request(message):
         }),
         }
 
-def successfull_login(user):
+def successfull_login():
     return {
         "statusCode": 200,
-        "body": json.dumps(user),
+        "body": json.dumps({}),
     }
