@@ -38,6 +38,20 @@ Resources:
           Properties:
             Path: /api/login
             Method: post
+  ChangeAvatarFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: change_avatar/
+      Handler: app.change_avatar_lambda
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      Events:
+        Login:
+          Type: Api
+          Properties:
+            Path: /api/changeAvatar/{username}
+            Method: put
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function

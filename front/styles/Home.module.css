@@ -13,26 +13,36 @@
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
     border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
 }
 
 .card_body {
-    padding: 20px;
+    padding: 40px;
+    width: 100%;
+    height: 75%;
 }
 
 .card_nav {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
     padding: 10px 30px;
     margin: 0;
     background-color: rgba(160, 199, 248, 0.8);
     overflow: hidden;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
+    height: 25%;
+}
+
+.nav_action {
+    margin-left: auto;
+    cursor: pointer;
 }
 
 .card_large {
     grid-column: 2 / 4;
 }
-
-.card_small {}
 
 .card h2 {
     font-size: 2rem;
@@ -51,6 +61,8 @@
     font-weight: 400;
     opacity: .7;
     letter-spacing: -.27px;
+    margin: 0;
+    margin-top: 20px;
 }
 
 .card h5 {
@@ -59,8 +71,76 @@
     letter-spacing: .23px;
 }
 
+.card input,
+.card textarea {
+    font-size: 1.1rem;
+    padding: 8px;
+    width: 100%;
+    border: 0px solid var(--bgColor);
+    border-radius: 6px;
+}
+
+.card input:focus,
+.card textarea:focus {
+    outline: none !important;
+    border: 2px solid var(--bgColor);
+}
+
+.add_file_btn label {
+    cursor: pointer;
+}
+
 .avatar_section {
     display: flex;
     flex-direction: row;
     align-items: center;
+}
+
+.add_file_btn {
+    background-color: var(--AccentColor);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    font-size: 3rem;
+    cursor: pointer;
+}
+
+
+.drop_area {
+    width: 100%;
+    height: 100%;
+    background-color: var(--AccentColor);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.drop_area p {
+    font-size: 3rem;
+}
+
+.no_padding {
+    padding: 0;
+}
+
+.file_preview {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 50px;
+}
+
+.uploaded_file_info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.uploaded_file_info p {
+    margin-top: auto;
 }
