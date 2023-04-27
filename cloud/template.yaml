@@ -24,6 +24,20 @@ Resources:
           Properties:
             Path: /api/registration
             Method: post
+  LoginFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: login/
+      Handler: app.login_lambda
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      Events:
+        Login:
+          Type: Api
+          Properties:
+            Path: /api/login
+            Method: post
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
