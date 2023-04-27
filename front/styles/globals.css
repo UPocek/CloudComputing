@@ -10,7 +10,7 @@
   
   body {
     background: var(--bgColor);
-    background: linear-gradient(335deg, rgba(0,142,239,1) 35%, rgba(133,210,248,1) 100%);
+    /* background: linear-gradient(335deg, rgba(0,142,239,1) 35%, rgba(133,210,248,1) 100%); */
     font-family: 'Rubik', sans-serif;
     line-height: 1.6;
     margin: 0;
