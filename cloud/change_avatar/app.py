@@ -9,8 +9,6 @@ def change_avatar_lambda(event, context):
     path_parameters = event.get('pathParameters')
     new_avatar = json.loads(event.get('body', '{}')).get('avatar')
     
-    print(new_avatar)
-    
     if path_parameters is None or path_parameters.get('username') is None or new_avatar is None:
         return bed_request("Missing required parameters")
     
@@ -27,14 +25,17 @@ def change_avatar_lambda(event, context):
         },
         ReturnValues="UPDATED_NEW",
     )
-
-    print(response)
                 
     return successfull_login()
 
 def bed_request(message):
     return {
         "statusCode": 400,
+        "headers": {
+        "Access-Control-Allow-Headers" : "Content-Type",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "PUT"
+    },
         "body": json.dumps({
             "message": message
         }),
@@ -43,5 +44,10 @@ def bed_request(message):
 def successfull_login():
     return {
         "statusCode": 200,
+        "headers": {
+        "Access-Control-Allow-Headers" : "Content-Type",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "PUT"
+    },
         "body": json.dumps({}),
     }
