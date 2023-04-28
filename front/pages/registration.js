@@ -2,29 +2,29 @@ import { useRef, useState } from "react"
 import styles from "../styles/Registration.module.css"
 import axios from "axios"
 import { baseUrl } from "./_app"
+import { useRouter } from "next/router";
 
 export default function RegistrationPage() {
-    const ref = useRef(null)
-
-
+    const ref = useRef(null);
+    const router = useRouter();
 
     const handleSubmit = (event) => {
         event.preventDefault();
         const inputs = {
-            "name":event.target.name.value,
-            "surname":event.target.surname.value,
-            "birthday":event.target.birthday.value,
-            "username":event.target.username.value,
-            "email":event.target.email.value,
-            "password":event.target.password.value,
+            "name": event.target.name.value,
+            "surname": event.target.surname.value,
+            "birthday": event.target.birthday.value,
+            "username": event.target.username.value,
+            "email": event.target.email.value,
+            "password": event.target.password.value,
         }
 
         if (isFormValid(inputs)) {
-            registerNewUser(inputs)
+            registerNewUser(inputs, router)
         } else {
             alert("You didn't fill out the form properly. Try again.");
         }
-        
+
     }
     return <div className={styles.registrationDiv}>
         <form className={styles.registrationForm} onSubmit={handleSubmit}>
@@ -74,5 +74,5 @@ function isFormValid(inputs) {
 }
 
 function registerNewUser(inputs, router) {
-    axios.post(`${baseUrl}/api/registration`, { 'newUser': inputs }).then((response) => { localStorage.setItem('user', response.data); router.replace('/') }).catch((err) => { alert(err) })
+    axios.post(`${baseUrl}/api/registration`, { 'newUser': inputs }).then((response) => { localStorage.setItem('user', JSON.stringify(response.data)); router.replace('/'); }).catch((err) => { alert(err) });
 }

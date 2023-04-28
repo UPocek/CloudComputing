@@ -9,7 +9,7 @@ var user = {}
 export default function Home() {
 
   useEffect(() => {
-    user = localStorage.getItem('user') || {};
+    user = JSON.parse(localStorage.getItem('user')) || {};
   }, []);
 
   return <>
@@ -38,6 +38,7 @@ function ProfileCard() {
 
   function assign_new_avatar(new_avatar_name) {
     user['avatar'] = new_avatar_name;
+    localStorage.setItem('user', JSON.stringify(user));
     setAvatarIndex(new_avatar_name);
     axios.put(`${baseUrl}/api/changeAvatar/${user['username']}`, { 'avatar': new_avatar_name })
   }
@@ -79,14 +80,19 @@ function UploadDocumentCard() {
 
     const reader = new FileReader();
     reader.addEventListener('load', (event) => {
-      const content = new Uint8Array(event.target.result);
-      sendFile(content)
+      const content = event.target.result;
+      sendFile(content);
     });
-    reader.readAsArrayBuffer(fileToUpload);
+    reader.readAsDataURL(fileToUpload);
   }
 
-  function sendFile(fileContent) {
-    const fileData = { 'filrContent': fileContent, 'fileName': fileToUpload['name'], 'fileType': getFileType(fileToUpload), 'fileSize': fileToUpload['size'], 'fileCreated': new Date().toISOString(), 'fileLastModefied': new Date(fileToUpload['lastModified']).toISOString(), 'description': descriptionRef.current.value, 'tags': tagsRef.split(','), 'user': user['username'], 'haveAccsess': [] };
+  async function sendFile(fileContent) {
+    const fileData = { 'fileContent': fileContent, 'fileName': fileToUpload['name'], 'fileType': fileToUpload['type'], 'fileSize': fileToUpload['size'], 'fileCreated': new Date().toISOString(), 'fileLastModefied': new Date(fileToUpload['lastModified']).toISOString(), 'description': descriptionRef.current.value, 'tags': tagsRef.current.value ? tagsRef.current.value.split(',') : [], 'owner': user['username'], 'haveAccsess': [user['username']] };
+    descriptionRef.current.value = '';
+    tagsRef.current.value = '';
+    setFileToUpload(null);
+    const response = await axios.post(`${baseUrl}/api/upload`, fileData);
+    console.log(response);
   }
 
   function handleDragOver(event) {

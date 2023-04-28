@@ -4,17 +4,15 @@ Description: >
   Sample SAM Template for CloudComputing project
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
-# Globals:
-#   Function:
-#     Timeout: 3
-#     MemorySize: 128
-
 Globals:
-    Api:
-        Cors:
-          AllowHeaders: "'*'"
-          AllowMethods: "'*'"
-          AllowOrigin: "'*'"
+  Function:
+    Timeout: 10
+    MemorySize: 128
+  Api:
+      Cors:
+        AllowHeaders: "'*'"
+        AllowMethods: "'*'"
+        AllowOrigin: "'*'"
 
 Resources:
   RegistrationFunction:
@@ -59,6 +57,20 @@ Resources:
           Properties:
             Path: /api/changeAvatar/{username}
             Method: put
+  UploadFileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: upload_file/
+      Handler: app.upload_file_lambda
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      Events:
+        Login:
+          Type: Api
+          Properties:
+            Path: /api/upload
+            Method: post
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function

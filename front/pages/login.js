@@ -39,5 +39,5 @@ export default function LoginPage() {
 }
 
 function login(credentials, router) {
-    axios.post(`${baseUrl}/api/login`, credentials).then((response) => { localStorage.setItem('user', response.data); router.replace('/') }).catch((err) => { console.log(err) })
+    axios.post(`${baseUrl}/api/login`, credentials).then((response) => { localStorage.setItem('user', JSON.stringify(response.data)); router.replace('/') }).catch((err) => { alert(err) });
 }
