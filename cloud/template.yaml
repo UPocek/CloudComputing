@@ -1,42 +1,87 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  cloud
-
-  Sample SAM Template for cloud
+  Sample SAM Template for CloudComputing project
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 3
+    Timeout: 10
     MemorySize: 128
+  Api:
+      Cors:
+        AllowHeaders: "'*'"
+        AllowMethods: "'*'"
+        AllowOrigin: "'*'"
 
 Resources:
-  HelloWorldFunction:
+  RegistrationFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      CodeUri: hello_world/
-      Handler: app.lambda_handler
+      CodeUri: registration/
+      Handler: app.registration_lambda
       Runtime: python3.8
       Architectures:
         - x86_64
       Events:
-        HelloWorld:
+        Registration:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
-            Path: /hello
-            Method: get
+            Path: /api/registration
+            Method: post
+  LoginFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: login/
+      Handler: app.login_lambda
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      Events:
+        Login:
+          Type: Api
+          Properties:
+            Path: /api/login
+            Method: post
+  ChangeAvatarFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: change_avatar/
+      Handler: app.change_avatar_lambda
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      Events:
+        Login:
+          Type: Api
+          Properties:
+            Path: /api/changeAvatar/{username}
+            Method: put
+  UploadFileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: upload_file/
+      Handler: app.upload_file_lambda
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      Events:
+        Login:
+          Type: Api
+          Properties:
+            Path: /api/upload
+            Method: post
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  HelloWorldApi:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
-  HelloWorldFunction:
-    Description: "Hello World Lambda Function ARN"
-    Value: !GetAtt HelloWorldFunction.Arn
-  HelloWorldFunctionIamRole:
-    Description: "Implicit IAM Role created for Hello World function"
-    Value: !GetAtt HelloWorldFunctionRole.Arn
+  RegistrationApi:
+    Description: "API Gateway endpoint URL for Prod stage for Registration function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/api/registration/"
+  RegistrationFunction:
+    Description: "Registration Lambda Function ARN"
+    Value: !GetAtt RegistrationFunction.Arn
+  RegistrationFunctionIamRole:
+    Description: "Implicit IAM Role created for RegistrationFunction"
+    Value: !GetAtt RegistrationFunction.Arn
