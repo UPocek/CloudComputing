@@ -30,7 +30,7 @@ def change_avatar_lambda(event, context):
         ReturnValues="UPDATED_NEW",
     )
 
-    return successfull_login()
+    return successfull_change()
 
 
 def bed_request(message):
@@ -45,7 +45,7 @@ def bed_request(message):
     }
 
 
-def successfull_login():
+def successfull_change():
     return {
         "statusCode": 200,
         "headers": {

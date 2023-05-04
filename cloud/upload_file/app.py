@@ -1,5 +1,6 @@
 import json
 import boto3
+import base64
 
 dynamodb_client = boto3.resource("dynamodb")
 files_table = dynamodb_client.Table("FilesMetadata")
@@ -31,8 +32,6 @@ def upload_file_lambda(event, context):
 
     fileContent = fileContent.split(",")[1]
 
-    print(fileContent)
-
     files_table.put_item(
         Item={
             "fileName": fileName,
@@ -46,10 +45,13 @@ def upload_file_lambda(event, context):
             "haveAccsess": haveAccsess,
         }
     )
-    fileBytes = bytes(fileContent, "UTF-8")
-    s3_client.put_object(Bucket=bucket_name, Key=f"{owner}/{fileName}", Body=fileBytes)
+    s3_client.put_object(
+        Bucket=bucket_name,
+        Key=f"{owner}/{fileName}",
+        Body=base64.b64decode(fileContent),
+    )
 
-    return successfull_login(body)
+    return successfull_upload(body)
 
 
 def bed_request(message):
@@ -64,7 +66,7 @@ def bed_request(message):
     }
 
 
-def successfull_login(file):
+def successfull_upload(file):
     return {
         "statusCode": 200,
         "headers": {
