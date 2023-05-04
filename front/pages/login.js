@@ -31,7 +31,7 @@ export default function LoginPage() {
             </div>
             <div className={styles.inputDiv}>
                 <div className={styles.submitDiv}>
-                    <input className={styles.submitBtn} type="submit" value="Register" />
+                    <input className={styles.submitBtn} type="submit" value="Login" />
                 </div>
             </div>
         </form>

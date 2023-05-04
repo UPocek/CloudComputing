@@ -109,7 +109,7 @@ function UploadDocumentCard() {
   function handleDrop(event) {
     event.stopPropagation();
     event.preventDefault();
-    const file = event.dataTransfer.files[0]
+    const file = event.dataTransfer.files[0];
     setFileToUpload(file);
     setFileDragging(false);
   }
@@ -123,7 +123,7 @@ function UploadDocumentCard() {
     <div className={`${styles.card_body} ${fileDragging && styles.no_padding}`} onDragOver={handleDragOver} onDrop={handleDrop} onDragLeaveCapture={handleDragLeaveCapture}>
 
       {(!fileDragging && !fileToUpload) && <div>
-        <input type="file" id="file-selector" name="file-selector" hidden />
+        <input type="file" id="file-selector" name="file-selector" hidden onChange={(e) => setFileToUpload(e.currentTarget.files[0])} />
         <div className={styles.add_file_btn}>
           <label htmlFor="file-selector">+</label>
         </div>
