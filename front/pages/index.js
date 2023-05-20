@@ -22,7 +22,7 @@ function Grid() {
       <div className={styles.grid}>
         <ProfileCard user={user} setUser={setUser} />
         <UploadDocumentCard />
-        <AlbumCard />
+        {user['albums'].map(albumName => <AlbumCard key={albumName} albumName={albumName} album={user['albums'][albumName]} />)}
         <NewAlbumCard albums={albums} setAlbums={setAlbums} />
       </div> : <div></div>}
   </>

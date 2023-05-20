@@ -4,6 +4,7 @@ import os
 
 dynamodb_client = boto3.resource("dynamodb")
 users_table = dynamodb_client.Table(os.environ["USERS_TABLE"])
+files_table = dynamodb_client.Table(os.environ["FILES_TABLE"])
 cognito_client = boto3.client("cognito-idp")
 
 
@@ -12,6 +13,14 @@ def user_details(event, context):
     user = get_user_from_cognito(jwt_token)
 
     user = users_table.get_item(Key={"username": user["preferred_username"]})["Item"]
+
+    for albumName in user["albums"]:
+        files = []
+        for file_name in user["albums"][albumName]:
+            owner, name = file_name.split(",")
+            file = files_table.get_item(Key={"fileName": name, "owner": owner})["Item"]
+            files.append(file)
+        user["albums"][albumName] = files
 
     return successfull_upload(user)
 

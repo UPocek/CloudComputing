@@ -9,7 +9,7 @@ cognito_client = boto3.client("cognito-idp")
 
 def new_album(event, context):
     body = json.loads(event["body"])
-    new_album_name = body.get("albumName")
+    new_album_name = body.get("albumName", "").replace(",", "")
     jwt_token = get_jwt_from_header(event)
     user = get_user_from_cognito(jwt_token)
 
