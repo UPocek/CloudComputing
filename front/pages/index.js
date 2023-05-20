@@ -182,10 +182,10 @@ function getFileType(file) {
   return 'other';
 }
 
-function AlbumCard() {
+function AlbumCard({ albumName, album }) {
   const [preview, setPreview] = useState(false)
   const [selectedDoc, setSelectedDoc] = useState(null)
-  const [documents, setDocuments] = useState([{ 'lastModified': '20.05.2023.', 'name': 'Ime dokumenta', 'tags': '#tag1;#tag2', 'comment': 'Neki koment' }, { 'lastModified': '20.05.2023.', 'name': 'Ime dokumenta', 'tags': '#tag1;#tag2', 'comment': 'Neki koment' }, { 'lastModified': '20.05.2023.', 'name': 'Ime dokumenta', 'tags': '#tag1;#tag2', 'comment': 'Neki koment' }, { 'lastModified': '20.05.2023.', 'name': 'Ime dokumenta', 'tags': '#tag1;#tag2', 'comment': 'Neki koment' }, { 'lastModified': '20.05.2023.', 'name': 'Ime dokumenta', 'tags': '#tag1;#tag2', 'comment': 'Neki koment' }, { 'lastModified': '20.05.2023.', 'name': 'Ime dokumenta', 'tags': '#tag1;#tag2', 'comment': 'Neki koment' }])
+  const [albumContent, setAlbumContent] = useState(album)
 
   function showPreview(index) {
     setPreview(true);
@@ -194,11 +194,11 @@ function AlbumCard() {
 
   return <div className={`${styles.card} ${styles.card_extra_large}`}>
     <div className={styles.card_nav}>
-      <h3>Main album</h3>
+      <h3>{albumName}</h3>
     </div>
-    {preview ? <DocumentPreview setPreview={setPreview} index={selectedDoc} setDocuments={setDocuments} documents={documents} /> :
+    {preview ? <DocumentPreview setPreview={setPreview} index={selectedDoc} setAlbum={setAlbumContent} album={albumContent} /> :
       <div className={styles.grid_album}>
-        {documents.map((doc, index) => <AlbumDocument doc={doc} showPreview={showPreview} index={index} key={index} />)}
+        {albumContent.map((doc, index) => <AlbumDocument doc={doc} showPreview={showPreview} index={index} key={index} />)}
 
       </div>}
   </div>
@@ -213,44 +213,45 @@ function AlbumDocument({ index, showPreview, doc }) {
         <Image src={'/images/document.png'} width={30} height={30} alt="doc" />
       </div>
       <div className={`${styles.file_data} ${!noBorderTop && styles.border_top}`}>
-        <h4>{doc['name']}</h4>
+        <h4>{doc['fileName']}</h4>
         <p> tip</p></div>
     </div>
   </div>
 }
 
-function DocumentPreview({ index, setPreview, setDocuments, documents }) {
-  const [name, setName] = useState(documents[index]['name']);
-  const [tags, setTags] = useState(documents[index]['tags']);
-  const [comment, setComment] = useState(documents[index]['comment']);
+function DocumentPreview({ index, setPreview, setAlbum, album }) {
+  const [name, setName] = useState(album[index]['fileName']);
+  const [tags, setTags] = useState(album[index]['tags']);
+  const [comment, setComment] = useState(album[index]['description']);
 
   const [editing, setEditing] = useState(false)
 
   function saveChanges(event) {
     event.preventDefault();
 
-    const updatedDocuments = [...documents]
-    updatedDocuments[index]['name'] = name;
+    const updatedDocuments = [...album]
+    updatedDocuments[index]['fileName'] = name;
     updatedDocuments[index]['tags'] = tags;
-    updatedDocuments[index]['comment'] = comment;
+    updatedDocuments[index]['description'] = comment;
 
-    setDocuments(updatedDocuments)
+    setAlbum(updatedDocuments)
     setEditing(false)
   }
 
   function setCurrentValues() {
-    setName(documents[index]['name']);
-    setTags(documents[index]['tags']);
-    setComment(documents[index]['comment']);
+    setName(album[index]['fileName']);
+    setTags(album[index]['tags']);
+    setComment(album[index]['description']);
     setEditing(false)
   }
+  console.log(album)
 
   return <div className={styles.prev_container}>
     <div className={styles.doc_nav}>
       <div className={styles.back} onClick={() => setPreview(false)}>
         <Image src={'/images/left-arrow.png'} width={24} height={24} alt="back" ></Image>
       </div>
-      <div className={styles.divider}>{documents[index]['lastModified']}</div>
+      <div className={styles.divider}>{album[index]['fileLastModefied']}</div>
       <div className={styles.divider}>
         <div className={styles.icon}>
           <Image src={'/images/download.png'} width={30} height={30} alt="doc" ></Image>
@@ -270,13 +271,13 @@ function DocumentPreview({ index, setPreview, setDocuments, documents }) {
       </div>
       <div className={styles.doc_details}>
         <h4>{editing ? <label htmlFor="name">{`Name:`}</label> : 'Name:'}</h4>
-        {editing ? <input type="name" id='name' name="name" value={name} onChange={e => setName(e.target.value)} /> : <p>{documents[index]['name']}</p>}
+        {editing ? <input type="name" id='name' name="name" value={name} onChange={e => setName(e.target.value)} /> : <p>{album[index]['fileName']}</p>}
 
         <h4>{editing ? <label htmlFor="tags">{`Tags (comma-separated):`}</label> : 'Tags:'}</h4>
-        {editing ? <input type="text" id='tags' name="tags" value={tags} onChange={e => setTags(e.target.value)} /> : <p>{documents[index]['tags']}</p>}
+        {editing ? <input type="text" id='tags' name="tags" value={tags} onChange={e => setTags(e.target.value)} /> : <p>{album[index]['tags']}</p>}
 
         <h4>{editing ? <label htmlFor="comment">Comment:</label> : 'Comment:'}</h4>
-        {editing ? <textarea rows="4" name="comment" value={comment} onChange={e => setComment(e.target.value)} /> : <p>{documents[index]['comment']}</p>}
+        {editing ? <textarea rows="4" name="comment" value={comment} onChange={e => setComment(e.target.value)} /> : <p>{album[index]['comment']}</p>}
         {editing && <div className={styles.btns}>
           <div className={styles.submitDiv} onClick={saveChanges}>
             Save

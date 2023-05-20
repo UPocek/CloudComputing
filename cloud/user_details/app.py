@@ -19,6 +19,8 @@ def user_details(event, context):
         for file_name in user["albums"][albumName]:
             owner, name = file_name.split(",")
             file = files_table.get_item(Key={"fileName": name, "owner": owner})["Item"]
+            file = dict(file)
+            del file["fileSize"]
             files.append(file)
         user["albums"][albumName] = files
 
