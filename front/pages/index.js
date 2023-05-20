@@ -182,10 +182,10 @@ function getFileType(file) {
   return 'other';
 }
 
-function AlbumCard() {
+function AlbumCard({ albumName, album }) {
   const [preview, setPreview] = useState(false)
   const [selectedDoc, setSelectedDoc] = useState(null)
-  const [documents, setDocuments] = useState([{ 'lastModified': '20.05.2023.', 'name': 'Ime dokumenta', 'tags': '#tag1;#tag2', 'comment': 'Neki koment' }, { 'lastModified': '20.05.2023.', 'name': 'Ime dokumenta', 'tags': '#tag1;#tag2', 'comment': 'Neki koment' }, { 'lastModified': '20.05.2023.', 'name': 'Ime dokumenta', 'tags': '#tag1;#tag2', 'comment': 'Neki koment' }, { 'lastModified': '20.05.2023.', 'name': 'Ime dokumenta', 'tags': '#tag1;#tag2', 'comment': 'Neki koment' }, { 'lastModified': '20.05.2023.', 'name': 'Ime dokumenta', 'tags': '#tag1;#tag2', 'comment': 'Neki koment' }, { 'lastModified': '20.05.2023.', 'name': 'Ime dokumenta', 'tags': '#tag1;#tag2', 'comment': 'Neki koment' }])
+  const [album, setAlbum] = useState(album)
 
   function showPreview(index) {
     setPreview(true);
@@ -194,9 +194,9 @@ function AlbumCard() {
 
   return <div className={`${styles.card} ${styles.card_extra_large}`}>
     <div className={styles.card_nav}>
-      <h3>Main album</h3>
+      <h3>{albumName}</h3>
     </div>
-    {preview ? <DocumentPreview setPreview={setPreview} index={selectedDoc} setDocuments={setDocuments} documents={documents} /> :
+    {preview ? <DocumentPreview setPreview={setPreview} index={selectedDoc} setAlbum={setAlbum} album={album} /> :
       <div className={styles.grid_album}>
         {documents.map((doc, index) => <AlbumDocument doc={doc} showPreview={showPreview} index={index} key={index} />)}
 
