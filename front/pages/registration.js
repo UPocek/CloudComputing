@@ -1,12 +1,13 @@
 import { useRef, useState } from "react"
 import styles from "../styles/Registration.module.css"
-import axios from "axios"
-import { baseUrl } from "./_app"
 import { useRouter } from "next/router";
+import UserPool from "@/helper/UserPool";
+import { CognitoUserAttribute } from "amazon-cognito-identity-js"
 
 export default function RegistrationPage() {
     const ref = useRef(null);
     const router = useRouter();
+    const [formInvalid, setFormInvalide] = useState(false);
 
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -20,7 +21,7 @@ export default function RegistrationPage() {
         }
 
         if (isFormValid(inputs)) {
-            registerNewUser(inputs, router)
+            registerNewUser(inputs, router, setFormInvalide)
         } else {
             alert("You didn't fill out the form properly. Try again.");
         }
@@ -60,6 +61,7 @@ export default function RegistrationPage() {
                     <input className={styles.submitBtn} type="submit" value="Register" />
                 </div>
             </div>
+            {formInvalid && <p className={styles.err}>Email already taken. Try another one.</p>}
         </form>
     </div>
 }
@@ -69,10 +71,23 @@ function isFormValid(inputs) {
     if (Object.values(inputs).includes("") || Object.values(inputs).includes(" ")) {
         return false;
     }
-
     return true;
 }
 
-function registerNewUser(inputs, router) {
-    axios.post(`${baseUrl}/api/registration`, { 'newUser': inputs }).then((response) => { localStorage.setItem('user', JSON.stringify(response.data)); router.replace('/'); }).catch((err) => { alert(err) });
+function registerNewUser(inputs, router, setFormInvalide) {
+    const attributeList = [
+        new CognitoUserAttribute({ Name: 'preferred_username', Value: inputs['username'] }),
+        new CognitoUserAttribute({ Name: 'name', Value: inputs['name'] }),
+        new CognitoUserAttribute({ Name: 'custom:surname', Value: inputs['surname'] }),
+        new CognitoUserAttribute({ Name: 'custom:birthday', Value: inputs['birthday'] }),
+    ]
+    UserPool.signUp(inputs['email'], inputs['password'], attributeList, null, (err, data) => {
+        if (err) {
+            console.log(err)
+            setFormInvalide(true);
+        }
+        if (data) {
+            router.replace('/login');
+        }
+    });
 }

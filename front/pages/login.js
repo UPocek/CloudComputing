@@ -1,10 +1,12 @@
 import styles from "../styles/Login.module.css"
-import axios from "axios"
-import { baseUrl } from "./_app"
 import { useRouter } from "next/router";
+import UserPool from "@/helper/UserPool";
+import { AuthenticationDetails, CognitoUser } from "amazon-cognito-identity-js";
+import { useState } from "react";
 
 export default function LoginPage() {
     const router = useRouter();
+    const [credentialsNotValid, setCredentialsNotValid] = useState();
 
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -13,7 +15,7 @@ export default function LoginPage() {
         if (username == '' || password == '') {
             alert("You didn't fill out the form properly. Try again.");
         } else {
-            login({ username: username, password: password }, router)
+            login({ username: username, password: password }, router, setCredentialsNotValid)
         }
     }
     return <div className={styles.registrationDiv}>
@@ -24,7 +26,7 @@ export default function LoginPage() {
             </div>
 
             <div className={styles.inputDiv}>
-                <input className={styles.inputField} type="text" id="username" name="username" placeholder="Username" />
+                <input className={styles.inputField} type="text" id="username" name="username" placeholder="Email" />
             </div>
             <div className={styles.inputDiv}>
                 <input className={styles.inputField} type="password" id="password" name="password" placeholder="Password" />
@@ -34,10 +36,33 @@ export default function LoginPage() {
                     <input className={styles.submitBtn} type="submit" value="Login" />
                 </div>
             </div>
+            {credentialsNotValid && <p>Credentials not valid. Try again.</p>}
         </form>
     </div>
 }
 
-function login(credentials, router) {
-    axios.post(`${baseUrl}/api/login`, credentials).then((response) => { localStorage.setItem('user', JSON.stringify(response.data)); router.replace('/') }).catch((err) => { alert(err) });
+function login(credentials, router, setCredentialsNotValid) {
+    const user = new CognitoUser({
+        Username: credentials['username'],
+        Pool: UserPool
+    });
+    const authDetails = new AuthenticationDetails({
+        Username: credentials['username'],
+        Password: credentials['password']
+    });
+
+    user.authenticateUser(authDetails, {
+        onSuccess: (data) => {
+            localStorage.setItem('accessToken', data.accessToken.jwtToken);
+            localStorage.setItem('idToken', data.idToken.jwtToken);
+            localStorage.setItem('refreshToken', data.refreshToken.token);
+            router.replace('/');
+        },
+        onFailure: (data) => {
+            setCredentialsNotValid(true);
+        },
+        newPasswordRequired: (data) => {
+            setCredentialsNotValid(true);
+        }
+    });
 }
