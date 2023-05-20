@@ -1,8 +1,9 @@
 import json
 import boto3
+import os
 
 client = boto3.resource("dynamodb")
-user_table = client.Table("User")
+user_table = client.Table(os.environ["USERS_TABLE"])
 
 
 def change_avatar_lambda(event, context):
