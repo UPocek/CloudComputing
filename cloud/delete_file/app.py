@@ -36,14 +36,15 @@ def delete_file_in_users(users, fileName):
         for key in user["albums"]:
             albums[key] = []
             for userfileName in user["albums"][key]:
-                if userfileName != fileName:
+                if userfileName != username + "," + fileName:
                     albums[key].append(userfileName)
-        files_table.update_item(
-            Key={"fileName": fileName, "owner": username},
-            UpdateExpression="SET albums = :albums",
-            ExpressionAttributeValues={":albums": albums},
-            ReturnValues="UPDATED_NEW",
-        ).get("Attributes")
+
+            users_table.update_item(
+                Key={"username": username},
+                UpdateExpression="SET albums = :albums",
+                ExpressionAttributeValues={":albums": albums},
+                ReturnValues="UPDATED_NEW",
+            ).get("Attributes")
 
 
 def delete_dynamodb(owner, fileName):

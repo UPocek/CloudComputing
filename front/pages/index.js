@@ -16,14 +16,14 @@ function Grid() {
   const [user, setUser] = useState(null);
   const [albums, setAlbums] = useState(null);
   useEffect(() => {
-    axios.get(`${baseUrl}/api/user`).then(response => setUser(response.data)).catch();
+    axios.get(`${baseUrl}/api/user`).then(response => { setUser(response.data); setAlbums(response.data['albums']); }).catch();
   }, []);
   return <>
     {user ?
       <div className={styles.grid}>
         <ProfileCard user={user} setUser={setUser} />
-        <UploadDocumentCard />
-        {Object.keys(user['albums']).map(albumName => <AlbumCard key={albumName} albumName={albumName} album={user['albums'][albumName]} />)}
+        <UploadDocumentCard user={user} albums={albums} setAlbums={setAlbums} />
+        {Object.keys(albums).map(albumName => <AlbumCard key={albumName} albumName={albumName} album={albums[albumName]} albums={albums} setAlbums={setAlbums} />)}
         <NewAlbumCard albums={albums} setAlbums={setAlbums} />
       </div> : <div></div>}
   </>
@@ -62,7 +62,7 @@ function ProfileCard({ user, setUser }) {
   </div>
 }
 
-function UploadDocumentCard() {
+function UploadDocumentCard({ user, albums, setAlbums }) {
   const [fileDragging, setFileDragging] = useState(false);
   const [fileToUpload, setFileToUpload] = useState(null);
   const descriptionRef = useRef(null);
@@ -88,6 +88,11 @@ function UploadDocumentCard() {
     tagsRef.current.value = '';
     setFileToUpload(null);
     const response = await axios.post(`${baseUrl}/api/upload`, fileData);
+
+    let newAlbums = JSON.parse(JSON.stringify(albums));
+    newAlbums['Main Album'].push(response.data);
+
+    setAlbums(newAlbums);
   }
 
   function handleDragOver(event) {
@@ -151,12 +156,13 @@ function UploadDocumentCard() {
 function NewAlbumCard({ albums, setAlbums }) {
   const [albumName, setAlbumName] = useState('');
 
-  function createNewAlbum() {
+  function createNewAlbum(e) {
+    e.preventDefault();
     if (albumName == '') {
       alert("Enter album name first");
       return;
     }
-    axios.post(`${baseUrl}/api/newAlbum`, { 'albumName': albumName }).then(response => setAlbums({ ...albums, albumName: [] }))
+    axios.post(`${baseUrl}/api/newAlbum`, { 'albumName': albumName }).then(response => setAlbums({ ...albums, [albumName]: [] })).catch(err => alert("Album with that name already exists"));
   }
 
   return <div className={`${styles.card} ${styles.card_small}`}>
@@ -169,7 +175,7 @@ function NewAlbumCard({ albums, setAlbums }) {
       <form onSubmit={createNewAlbum}>
         <label htmlFor="albumName">Album name</label>
         <input type="text" name="albumName" id="albumName" onChange={(e) => setAlbumName(e.currentTarget.value)} />
-        <input type="submit" value='Create' />
+        <input className="actionBtn" type="submit" value='Create' />
       </form>
     </div>
   </div>
@@ -182,7 +188,7 @@ function getFileType(file) {
   return 'other';
 }
 
-function AlbumCard({ albumName, album }) {
+function AlbumCard({ albumName, album, albums, setAlbums }) {
   const [preview, setPreview] = useState(false)
   const [selectedDoc, setSelectedDoc] = useState(null)
   const [albumContent, setAlbumContent] = useState(album)
@@ -196,7 +202,7 @@ function AlbumCard({ albumName, album }) {
     <div className={styles.card_nav}>
       <h3>{albumName}</h3>
     </div>
-    {preview ? <DocumentPreview setPreview={setPreview} index={selectedDoc} setAlbum={setAlbumContent} album={albumContent} /> :
+    {preview ? <DocumentPreview setPreview={setPreview} index={selectedDoc} setAlbum={setAlbumContent} album={albumContent} albums={albums} albumName={albumName} setAlbums={setAlbums} /> :
       <div className={styles.grid_album}>
         {albumContent.map((doc, index) => <AlbumDocument doc={doc} showPreview={showPreview} index={index} key={index} />)}
 
@@ -219,9 +225,10 @@ function AlbumDocument({ index, showPreview, doc }) {
   </div>
 }
 
-function DocumentPreview({ index, setPreview, setAlbum, album }) {
+function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName, setAlbums }) {
   const [tags, setTags] = useState(album[index]['tags']);
   const [comment, setComment] = useState(album[index]['description']);
+  const [newAlbumSelected, setNewAlbumSelected] = useState(albumName)
 
   const [editing, setEditing] = useState(false)
 
@@ -250,14 +257,27 @@ function DocumentPreview({ index, setPreview, setAlbum, album }) {
     setEditing(false)
   }
 
-  function hadleDelete() {
-    axios.delete(`${baseUrl}/api/delete_file`, { params: { fileName: album[index]['fileName'], owner: album[index]['owner'] } }).then(_ => deleteFile()).catch(err => console.log(err));
+
+  function handleDelete() {
+    axios.delete(`${baseUrl}/api/delete_file`, { params: { fileName: album[index]['fileName'], owner: album[index]['owner'] } }).then(response => deleteFile()).catch(err => console.log(err));
   }
 
   function deleteFile() {
-    const updatedDocuments = [...album].splice(index, 1)
-    setAlbum(updatedDocuments)
     setEditing(false)
+  }
+
+  function moveToNewAlbum() {
+    if (newAlbumSelected == albumName) return;
+
+    let newAlbums = JSON.parse(JSON.stringify(albums));
+    if (albumName != 'Main Album') {
+      newAlbums[albumName] = newAlbums[albumName].filter(file => file['fileName'] != name);
+    }
+
+    newAlbums[newAlbumSelected].push(album[index]);
+    setAlbums(newAlbums);
+
+    axios.put(`${baseUrl}/api/`)
   }
 
   return <div className={styles.prev_container}>
@@ -268,41 +288,56 @@ function DocumentPreview({ index, setPreview, setAlbum, album }) {
       <div className={styles.divider}>{album[index]['fileLastModefied']}</div>
       <div className={styles.divider}>
         <div className={styles.icon}>
-          <Image src={'/images/download.png'} width={30} height={30} alt="download" ></Image>
+          <Image src={'/images/download.png'} width={30} height={30} alt="doc" ></Image>
         </div>
         {album[index]['owner'] == getUserEmail() && <div className={styles.icon} onClick={() => setEditing(true)}>
-          <Image src={'/images/edit.png'} width={30} height={30} alt="edit" ></Image>
+          <Image src={'/images/edit.png'} width={30} height={30} alt="doc" ></Image>
         </div>}
-        {album[index]['owner'] == getUserEmail() && <div className={styles.icon} onClick={hadleDelete}>
-          <Image src={'/images/delete.png'} width={30} height={30} alt="delete" ></Image>
+        {album[index]['owner'] == getUserEmail() && <div className={styles.icon} onClick={handleDelete}>
+          <Image src={'/images/delete.png'} width={30} height={30} alt="doc" ></Image>
         </div>}
       </div>
 
     </div>
     <div className={styles.doc_body}>
       <div className={styles.doc_prev}>
-        <Image src={'/images/document.png'} width={300} height={300} alt="doc" ></Image>
+        <Image src={'/images/document.png'} width={250} height={250} alt="doc" ></Image>
       </div>
       <div className={styles.doc_details}>
-        <h4>'Name:'</h4>
-        <p>{album[index]['fileName']}</p>
-
-        <h4>{editing ? <label htmlFor="tags">{`Tags (comma-separated):`}</label> : 'Tags:'}</h4>
-        {editing ? <input type="text" id='tags' name="tags" value={tags} onChange={e => setTags(e.target.value)} /> : <p>{album[index]['tags']}</p>}
-
-        <h4>{editing ? <label htmlFor="comment">Comment:</label> : 'Comment:'}</h4>
-        {editing ? <textarea rows="4" name="comment" value={comment} onChange={e => setComment(e.target.value)} /> : <p>{album[index]['comment']}</p>}
-        {editing && <div className={styles.btns}>
-          <div className={styles.submitDiv} onClick={saveChanges}>
-            Save
+        <div className={styles.topDetails}>
+          <div className={styles.details}>
+            <h4>Name:</h4>
+            <p>{album[index]['fileName']}</p>
           </div>
-          <div className={`${styles.submitDiv} ${styles.cancle}`} onClick={setCurrentValues}>
-            Cancle
+          <div className={styles.details}>
+            <h4>{editing ? <label htmlFor="tags">{`Tags (comma-separated):`}</label> : 'Tags:'}</h4>
+            {editing ? <input type="text" id='tags' name="tags" value={tags} onChange={e => setTags(e.target.value)} /> : <p>{album[index]['tags']}</p>}
           </div>
-        </div>}
+          <div className={styles.details}>
+            <h4>{editing ? <label htmlFor="comment">Comment:</label> : 'Comment:'}</h4>
+            {editing ? <textarea rows="4" name="comment" value={comment} onChange={e => setComment(e.target.value)} /> : <p>{album[index]['comment']}</p>}
+          </div>
+          <div className={styles.details}>
+            {editing && <div className={styles.btns}>
+              <div className={styles.submitDiv} onClick={saveChanges}>
+                Save
+              </div>
+              <div className={`${styles.submitDiv} ${styles.cancle}`} onClick={setCurrentValues}>
+                Cancle
+              </div>
+            </div>}
+          </div>
+        </div>
+        <div className={styles.bottomDetails}>
+          <div className={styles.details}>
+            <h4>Move to album</h4>
+            <select defaultValue={newAlbumSelected} onChange={e => setNewAlbumSelected(e.target.value)}>
+              {Object.keys(albums).map(albumName => <option key={albumName} value={albumName}>{albumName}</option>)}
+            </select>
+          </div>
+          <button className={styles.submitBtn} onClick={moveToNewAlbum}>Move</button>
+        </div>
       </div>
-
     </div>
-
   </div>
 }
