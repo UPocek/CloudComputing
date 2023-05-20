@@ -21,6 +21,24 @@ body {
   color: var(--DarkGray);
 }
 
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+form input {
+  max-width: 300px;
+  padding: 5px 10px;
+  border-radius: 6px;
+}
+
+form label {
+  display: block;
+  margin: 0;
+}
+
 /* Header */
 @media (max-width:1069px) {
 

@@ -234,3 +234,21 @@ Resources:
             ApiId: !Ref ApiGatewayApi
             Auth:
               Authorizer: UsersCognitoAuthorizer
+  NewAlbumFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: new_album/
+      Handler: app.new_album
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonCognitoReadOnly
+        - AmazonDynamoDBFullAccess
+      Events:
+        ApiGateway:
+          Type: HttpApi
+          Properties:
+            Path: /api/newAlbum
+            Method: get
+            ApiId: !Ref ApiGatewayApi
+            Auth:
+              Authorizer: UsersCognitoAuthorizer

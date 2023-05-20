@@ -22,6 +22,7 @@ def registration_lambda(event, context):
 
     newUser["avatar"] = get_random_avatar(newUser)
     newUser["username"] = newUser["preferred_username"]
+    newUser["albums"] = {}
     del newUser["preferred_username"]
     user_table.put_item(Item=newUser)
     return event
