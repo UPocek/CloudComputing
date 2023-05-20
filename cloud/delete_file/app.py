@@ -14,7 +14,12 @@ def delete_file(event, context):
     owner = event["queryStringParameters"].get("owner")
     if fileName is None or owner is None:
         return bed_request("Required parameters missing")
+    is_deleted = delete_file(fileName, owner)
 
+    return successfull({"fileName": fileName, "deleted": is_deleted})
+
+
+def delete_file(fileName, owner):
     file_to_delete = files_table.get_item(
         Key={"fileName": fileName, "owner": owner}
     ).get("Item")
@@ -24,9 +29,7 @@ def delete_file(event, context):
     users = file_to_delete["haveAccess"]
     delete_file_in_users(users, fileName)
     delete_dynamodb(owner, fileName)
-    is_deleted = delete_s3(owner, fileName)
-
-    return successfull({"fileName": fileName, "deleted": is_deleted})
+    return delete_s3(owner, fileName)
 
 
 def delete_file_in_users(users, fileName):
