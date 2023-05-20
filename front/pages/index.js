@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import Image from "next/image";
 import axios from "axios";
 import { baseUrl } from "./_app";
+import { getUserEmail } from "@/helper/helper";
 
 
 export default function Home() {
@@ -234,7 +235,6 @@ function AlbumDocument({ index, showPreview, doc }) {
 }
 
 function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName, setAlbums }) {
-  const [name, setName] = useState(album[index]['fileName']);
   const [tags, setTags] = useState(album[index]['tags']);
   const [comment, setComment] = useState(album[index]['description']);
   const [newAlbumSelected, setNewAlbumSelected] = useState(albumName)
@@ -243,20 +243,35 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
 
   function saveChanges(event) {
     event.preventDefault();
+    const editedFile = {
+      'tags': (album[index]['tags'] != tags ? tags : undefined),
+      'description': (album[index]['description'] != confirm ? comment : undefined),
+    }
 
+    const filteredEditFile = Object.fromEntries(Object.entries(editedFile).filter(([_, v]) => v !== undefined));
+    axios.put(`${baseUrl}/api/update_file`, filteredEditFile, { params: { fileName: album[index]['fileName'], owner: album[index]['owner'] } }).then(_ => setNewValues()).catch(err => console.log(err));
+  }
+
+  function setNewValues() {
     const updatedDocuments = [...album]
-    updatedDocuments[index]['fileName'] = name;
     updatedDocuments[index]['tags'] = tags;
     updatedDocuments[index]['description'] = comment;
-
     setAlbum(updatedDocuments)
     setEditing(false)
   }
 
   function setCurrentValues() {
-    setName(album[index]['fileName']);
     setTags(album[index]['tags']);
     setComment(album[index]['description']);
+    setEditing(false)
+  }
+
+
+  function handleDelete() {
+    axios.delete(`${baseUrl}/api/delete_file`, { params: { fileName: album[index]['fileName'], owner: album[index]['owner'] } }).then(response => deleteFile()).catch(err => console.log(err));
+  }
+
+  function deleteFile() {
     setEditing(false)
   }
 
@@ -274,7 +289,6 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
     setAlbums(newAlbums);
 
     axios.put(`${baseUrl}/api/move`, { 'oldAlbum': albumName, 'newAlbum': newAlbumSelected, 'fileName': name }).then(response => setPreview(false)).catch();
-
   }
 
   return <div className={styles.prev_container}>
@@ -287,12 +301,12 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
         <div className={styles.icon}>
           <Image src={'/images/download.png'} width={30} height={30} alt="doc" ></Image>
         </div>
-        <div className={styles.icon} onClick={() => setEditing(true)}>
+        {album[index]['owner'] == getUserEmail() && <div className={styles.icon} onClick={() => setEditing(true)}>
           <Image src={'/images/edit.png'} width={30} height={30} alt="doc" ></Image>
-        </div>
-        <div className={styles.icon}>
+        </div>}
+        {album[index]['owner'] == getUserEmail() && <div className={styles.icon} onClick={handleDelete}>
           <Image src={'/images/delete.png'} width={30} height={30} alt="doc" ></Image>
-        </div>
+        </div>}
       </div>
 
     </div>
@@ -303,8 +317,8 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
       <div className={styles.doc_details}>
         <div className={styles.topDetails}>
           <div className={styles.details}>
-            <h4>{editing ? <label htmlFor="name">{`Name:`}</label> : 'Name:'}</h4>
-            {editing ? <input type="text" id='name' name="name" value={name} onChange={e => setName(e.target.value)} /> : <p>{album[index]['fileName']}</p>}
+            <h4>Name:</h4>
+            <p>{album[index]['fileName']}</p>
           </div>
           <div className={styles.details}>
             <h4>{editing ? <label htmlFor="tags">{`Tags (comma-separated):`}</label> : 'Tags:'}</h4>
