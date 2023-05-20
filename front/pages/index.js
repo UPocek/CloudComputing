@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import Image from "next/image";
 import axios from "axios";
 import { baseUrl } from "./_app";
+import { getUserEmail } from "@/helper/helper";
 
 
 export default function Home() {
@@ -87,7 +88,6 @@ function UploadDocumentCard() {
     tagsRef.current.value = '';
     setFileToUpload(null);
     const response = await axios.post(`${baseUrl}/api/upload`, fileData);
-    console.log(response);
   }
 
   function handleDragOver(event) {
@@ -220,7 +220,6 @@ function AlbumDocument({ index, showPreview, doc }) {
 }
 
 function DocumentPreview({ index, setPreview, setAlbum, album }) {
-  const [name, setName] = useState(album[index]['fileName']);
   const [tags, setTags] = useState(album[index]['tags']);
   const [comment, setComment] = useState(album[index]['description']);
 
@@ -228,23 +227,38 @@ function DocumentPreview({ index, setPreview, setAlbum, album }) {
 
   function saveChanges(event) {
     event.preventDefault();
+    const editedFile = {
+      'tags': (album[index]['tags'] != tags ? tags : undefined),
+      'description': (album[index]['description'] != confirm ? comment : undefined),
+    }
 
+    const filteredEditFile = Object.fromEntries(Object.entries(editedFile).filter(([_, v]) => v !== undefined));
+    axios.put(`${baseUrl}/api/update_file`, filteredEditFile, { params: { fileName: album[index]['fileName'], owner: album[index]['owner'] } }).then(_ => setNewValues()).catch(err => console.log(err));
+  }
+
+  function setNewValues() {
     const updatedDocuments = [...album]
-    updatedDocuments[index]['fileName'] = name;
     updatedDocuments[index]['tags'] = tags;
     updatedDocuments[index]['description'] = comment;
-
     setAlbum(updatedDocuments)
     setEditing(false)
   }
 
   function setCurrentValues() {
-    setName(album[index]['fileName']);
     setTags(album[index]['tags']);
     setComment(album[index]['description']);
     setEditing(false)
   }
-  console.log(album)
+
+  function hadleDelete() {
+    axios.delete(`${baseUrl}/api/delete_file`, { params: { fileName: album[index]['fileName'], owner: album[index]['owner'] } }).then(_ => deleteFile()).catch(err => console.log(err));
+  }
+
+  function deleteFile() {
+    const updatedDocuments = [...album].splice(index, 1)
+    setAlbum(updatedDocuments)
+    setEditing(false)
+  }
 
   return <div className={styles.prev_container}>
     <div className={styles.doc_nav}>
@@ -254,14 +268,14 @@ function DocumentPreview({ index, setPreview, setAlbum, album }) {
       <div className={styles.divider}>{album[index]['fileLastModefied']}</div>
       <div className={styles.divider}>
         <div className={styles.icon}>
-          <Image src={'/images/download.png'} width={30} height={30} alt="doc" ></Image>
+          <Image src={'/images/download.png'} width={30} height={30} alt="download" ></Image>
         </div>
-        <div className={styles.icon} onClick={() => setEditing(true)}>
-          <Image src={'/images/edit.png'} width={30} height={30} alt="doc" ></Image>
-        </div>
-        <div className={styles.icon}>
-          <Image src={'/images/delete.png'} width={30} height={30} alt="doc" ></Image>
-        </div>
+        {album[index]['owner'] == getUserEmail() && <div className={styles.icon} onClick={() => setEditing(true)}>
+          <Image src={'/images/edit.png'} width={30} height={30} alt="edit" ></Image>
+        </div>}
+        {album[index]['owner'] == getUserEmail() && <div className={styles.icon} onClick={hadleDelete}>
+          <Image src={'/images/delete.png'} width={30} height={30} alt="delete" ></Image>
+        </div>}
       </div>
 
     </div>
@@ -270,8 +284,8 @@ function DocumentPreview({ index, setPreview, setAlbum, album }) {
         <Image src={'/images/document.png'} width={300} height={300} alt="doc" ></Image>
       </div>
       <div className={styles.doc_details}>
-        <h4>{editing ? <label htmlFor="name">{`Name:`}</label> : 'Name:'}</h4>
-        {editing ? <input type="name" id='name' name="name" value={name} onChange={e => setName(e.target.value)} /> : <p>{album[index]['fileName']}</p>}
+        <h4>'Name:'</h4>
+        <p>{album[index]['fileName']}</p>
 
         <h4>{editing ? <label htmlFor="tags">{`Tags (comma-separated):`}</label> : 'Tags:'}</h4>
         {editing ? <input type="text" id='tags' name="tags" value={tags} onChange={e => setTags(e.target.value)} /> : <p>{album[index]['tags']}</p>}
