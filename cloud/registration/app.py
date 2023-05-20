@@ -1,61 +1,31 @@
-import json
 import boto3
 import random
+import os
 
 client = boto3.resource("dynamodb")
-user_table = client.Table("User")
+user_table = client.Table(os.environ["USERS_TABLE"])
 
 
 def registration_lambda(event, context):
-    body = event.get("body")
+    user_attributes = event["request"]["userAttributes"]
 
-    if body is None:
-        return bed_request("Required parameters missing")
-
-    body = json.loads(body)
-
-    newUser = body.get("newUser")
-    if newUser is None:
-        return bed_request("Required parameters missing")
-    if set(newUser.keys()) != set(
-        ["name", "surname", "birthday", "username", "email", "password"]
-    ):
-        return bed_request("Required parameters missing")
-
-    username = newUser["username"]
-
-    user = user_table.get_item(Key={"username": username})
-    if user.get("Item") is not None:
-        return bed_request("Username already exists!")
+    newUser = {}
+    for key in user_attributes:
+        if key in [
+            "name",
+            "custom:surname",
+            "custom:birthday",
+            "preferred_username",
+            "email",
+        ]:
+            newUser[key.replace("custom:", "")] = user_attributes[key]
 
     newUser["avatar"] = get_random_avatar(newUser)
-    _ = user_table.put_item(Item=newUser)
-    return successfull_registration(newUser)
-
-
-def bed_request(message):
-    return {
-        "statusCode": 400,
-        "headers": {
-            "Access-Control-Allow-Headers": "Content-Type",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST",
-        },
-        "body": json.dumps({"message": message}),
-    }
-
-
-def successfull_registration(user):
-    del user["password"]
-    return {
-        "statusCode": 200,
-        "headers": {
-            "Access-Control-Allow-Headers": "Content-Type",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST",
-        },
-        "body": json.dumps(user),
-    }
+    newUser["username"] = newUser["preferred_username"]
+    newUser["albums"] = {}
+    del newUser["preferred_username"]
+    user_table.put_item(Item=newUser)
+    return event
 
 
 def get_random_avatar(user):

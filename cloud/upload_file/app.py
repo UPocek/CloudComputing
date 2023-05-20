@@ -42,7 +42,7 @@ def upload_file_lambda(event, context):
             "description": description,
             "tags": tags,
             "owner": owner,
-            "haveAccsess": haveAccsess,
+            "haveAccess": haveAccsess,
         }
     )
     s3_client.put_object(

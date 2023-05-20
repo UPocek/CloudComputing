@@ -32,7 +32,7 @@
     overflow: hidden;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
-    height: 25%;
+    height: 90px;
 }
 
 .nav_action {
@@ -143,4 +143,9 @@
 
 .uploaded_file_info p {
     margin-top: auto;
+}
+
+.additionalTitle {
+    margin-top: 0;
+    margin-bottom: 20px;
 }

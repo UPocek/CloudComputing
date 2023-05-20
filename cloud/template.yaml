@@ -71,6 +71,7 @@ Resources:
           Properties:
             Path: /api/upload
             Method: post
+<<<<<<< Updated upstream
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
@@ -85,3 +86,44 @@ Outputs:
   RegistrationFunctionIamRole:
     Description: "Implicit IAM Role created for RegistrationFunction"
     Value: !GetAtt RegistrationFunction.Arn
+=======
+            ApiId: !Ref ApiGatewayApi
+            Auth:
+              Authorizer: UsersCognitoAuthorizer
+  GetUserDetailsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: user_details/
+      Handler: app.user_details
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonCognitoReadOnly
+        - AmazonDynamoDBReadOnlyAccess
+      Events:
+        ApiGateway:
+          Type: HttpApi
+          Properties:
+            Path: /api/user
+            Method: get
+            ApiId: !Ref ApiGatewayApi
+            Auth:
+              Authorizer: UsersCognitoAuthorizer
+  NewAlbumFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: new_album/
+      Handler: app.new_album
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonCognitoReadOnly
+        - AmazonDynamoDBFullAccess
+      Events:
+        ApiGateway:
+          Type: HttpApi
+          Properties:
+            Path: /api/newAlbum
+            Method: get
+            ApiId: !Ref ApiGatewayApi
+            Auth:
+              Authorizer: UsersCognitoAuthorizer
+>>>>>>> Stashed changes

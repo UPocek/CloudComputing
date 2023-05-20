@@ -18,10 +18,19 @@ export default function Home() {
 }
 
 function Grid() {
-  return <div className={styles.grid}>
-    <ProfileCard />
-    <UploadDocumentCard />
-  </div>
+  const [user, setUser] = useState(null);
+  const [albums, setAlbums] = useState(null);
+  useEffect(() => {
+    axios.get(`${baseUrl}/api/user`).then(response => setUser(response.data)).catch();
+  }, []);
+  return <>
+    {user ?
+      <div className={styles.grid}>
+        <ProfileCard user={user} setUser={setUser} />
+        <UploadDocumentCard />
+        <NewAlbumCard albums={albums} setAlbums={setAlbums} />
+      </div> : <div></div>}
+  </>
 }
 
 function ProfileCard() {
@@ -153,8 +162,35 @@ function UploadDocumentCard() {
   </div>
 }
 
+function NewAlbumCard({ albums, setAlbums }) {
+  const [albumName, setAlbumName] = useState('');
+
+  function createNewAlbum() {
+    if (albumName == '') {
+      alert("Enter album name first");
+      return;
+    }
+    axios.post(`${baseUrl}/api/newAlbum`, { 'albumName': albumName }).then(response => setAlbums({ ...albums, albumName: [] }))
+  }
+
+  return <div className={`${styles.card} ${styles.card_small}`}>
+    <div className={styles.card_nav}>
+      <h3>New album</h3>
+      <Image className={styles.nav_action} src='/images/add-folder.png' alt="Upload" width={40} height={40} onClick={createNewAlbum} />
+    </div>
+    <div className={`${styles.card_body}`}>
+      <p className={styles.additionalTitle}>Create new empty album</p>
+      <form onSubmit={createNewAlbum}>
+        <label htmlFor="albumName">Album name</label>
+        <input type="text" name="albumName" id="albumName" onChange={(e) => setAlbumName(e.currentTarget.value)} />
+        <input type="submit" value='Create' />
+      </form>
+    </div>
+  </div>
+}
+
 function getFileType(file) {
-  if (file.type.startsWith('image/')) return 'image';
+  if (file.type.startsWith('image /')) return 'image';
   if (file.type.startsWith('video/')) return 'video';
   if (file.type.startsWith('application/')) return 'document';
   return 'other';
