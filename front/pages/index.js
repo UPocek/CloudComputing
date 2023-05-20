@@ -21,7 +21,7 @@ function Grid() {
     {user ?
       <div className={styles.grid}>
         <ProfileCard user={user} setUser={setUser} />
-        <UploadDocumentCard />
+        <UploadDocumentCard user={user} />
         {Object.keys(user['albums']).map(albumName => <AlbumCard key={albumName} albumName={albumName} album={user['albums'][albumName]} />)}
         <NewAlbumCard albums={albums} setAlbums={setAlbums} />
       </div> : <div></div>}
@@ -61,7 +61,7 @@ function ProfileCard({ user, setUser }) {
   </div>
 }
 
-function UploadDocumentCard() {
+function UploadDocumentCard({ user }) {
   const [fileDragging, setFileDragging] = useState(false);
   const [fileToUpload, setFileToUpload] = useState(null);
   const descriptionRef = useRef(null);
