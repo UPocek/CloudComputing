@@ -248,7 +248,7 @@ Resources:
         ApiGateway:
           Type: HttpApi
           Properties:
-            Path: /api/newAlbum
+            Path: /api/album
             Method: post
             ApiId: !Ref ApiGatewayApi
             Auth:
@@ -268,6 +268,25 @@ Resources:
           Properties:
             Path: /api/move
             Method: put
+            ApiId: !Ref ApiGatewayApi
+            Auth:
+              Authorizer: UsersCognitoAuthorizer
+  DeleteAlbumFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: delete_album/
+      Handler: app.delete_album
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonCognitoReadOnly
+        - AmazonDynamoDBFullAccess
+        - AmazonS3FullAccess
+      Events:
+        ApiGateway:
+          Type: HttpApi
+          Properties:
+            Path: /api/album/{albumName}
+            Method: delete
             ApiId: !Ref ApiGatewayApi
             Auth:
               Authorizer: UsersCognitoAuthorizer

@@ -1,38 +1,35 @@
 import json
 import boto3
-import base64
 import os
 
 dynamodb_client = boto3.resource("dynamodb")
-files_table = dynamodb_client.Table(os.environ["FILES_TABLE"])
 users_table = dynamodb_client.Table(os.environ["USERS_TABLE"])
 cognito_client = boto3.client("cognito-idp")
-s3_client = boto3.client("s3")
-bucket_name = os.environ["FILES_BUCKET"]
 
 
-def move_file(event, context):
-    body = json.loads(event["body"])
+def delete_album(event, context):
+    path_parameters = event.get("pathParameters")
     if (
-        body.get("oldAlbum") is None
-        or body.get("newAlbum") is None
-        or body.get("fileName") is None
+        path_parameters is None
+        or path_parameters.get("albumName") is None
+        or path_parameters.get("albumName") == os.environ["Main Album"]
     ):
-        return bed_request("Required parameters missing")
+        return bed_request("Missing required parameters")
+    album_to_delete = path_parameters["albumName"]
 
-    old_album = body["oldAlbum"]
-    new_album = body["newAlbum"]
-    file_name = body["fileName"]
     jwt_token = get_jwt_from_header(event)
     user = get_user_from_cognito(jwt_token)
     user = users_table.get_item(Key={"username": user["preferred_username"]})["Item"]
 
-    if old_album != os.environ["MAIN_ALBUM_NAME"]:
-        user["albums"][old_album].remove(f"{user['username']},{file_name}")
-    user["albums"][new_album].append(f"{user['username']},{file_name}")
+    if user["albums"].get(album_to_delete) is None:
+        return bed_request("Album with that name does not exist")
+
+    # Delete every file from album
+
+    del user["albums"][album_to_delete]
     users_table.put_item(Item=user)
 
-    return successfull_upload(body)
+    return successfull_upload(user)
 
 
 def get_jwt_from_header(event):
