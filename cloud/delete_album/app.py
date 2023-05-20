@@ -24,7 +24,8 @@ def delete_album(event, context):
     if user["albums"].get(album_to_delete) is None:
         return bed_request("Album with that name does not exist")
 
-    # Delete every file from album
+    for file in user["albums"][album_to_delete]:
+        owner, fileName = file.split(",")
 
     del user["albums"][album_to_delete]
     users_table.put_item(Item=user)
