@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import Image from "next/image";
 import axios from "axios";
 import { baseUrl } from "./_app";
+import AlbumCard from "@/components/album_card";
 
 var user = {}
 
@@ -14,6 +15,7 @@ export default function Home() {
 
   return <>
     <Grid />
+    <AlbumCard />
   </>
 }
 

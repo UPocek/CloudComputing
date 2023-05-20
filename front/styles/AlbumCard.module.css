@@ -1,0 +1,83 @@
+.card_container{
+    margin: 0 auto;
+    width: 60%;
+    margin-bottom: 2rem;
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+}
+
+.card_nav {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 30px;
+    margin: 0;
+    background-color: rgba(160, 199, 248, 0.8);
+    overflow: hidden;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    height: 25%;
+}
+
+.nav_action {
+    margin-left: auto;
+    cursor: pointer;
+}
+
+.card h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin: 0 auto;
+    padding: 1rem 2rem;
+}
+
+.document{
+    display: flex;
+    align-items: center;
+    margin: 0 1rem;
+    padding: 0 1rem;
+    cursor: pointer;
+}
+
+.document:hover{
+    background-color: var(--LightNote);
+    border: 1px solid var(--LightNote);
+    border-radius: 8px;
+}
+
+.file_data{
+    margin-left: 1rem;
+    width: 100%;
+    padding: 1rem 0;
+}
+
+.border_top{
+     border-top: 1px solid var(--LightNote);
+}
+
+.border_left{
+    border-left: 1px solid var(--LightNote);
+}
+
+.file_data h4{
+    margin: 0;
+}
+
+.file_data p{
+    margin: 0;
+    color: var(--Note);
+}
+
