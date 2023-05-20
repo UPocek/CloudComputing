@@ -1,11 +1,12 @@
 import json
 import boto3
 import base64
+import os
 
 dynamodb_client = boto3.resource("dynamodb")
-files_table = dynamodb_client.Table("FilesMetadata")
+files_table = dynamodb_client.Table(os.environ["FILES_TABLE"])
 s3_client = boto3.client("s3")
-bucket_name = "cloudcomputingfiles"
+bucket_name = os.environ["FILES_BUCKET"]
 
 
 def upload_file_lambda(event, context):

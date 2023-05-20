@@ -3,90 +3,216 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   Sample SAM Template for CloudComputing project
 
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Parameters:
+  AllFilesBacketName:
+    Type: String
+    Default: cloud-every-file
+  UsersTableName:
+    Type: String
+    Default: CloudUsers
+  FilesTableName:
+    Type: String
+    Default: CloudFiles
+  InvitationsTableName:
+    Type: String
+    Default: CloudInvitations
+  UsersUserPoolName:
+    Type: String
+    Default: CloudUsers
+  UsersUserPoolClientName:
+    Type: String
+    Default: cloudusersacc
+  UsersUserPoolDomainName:
+    Type: String
+    Default: cloud-users-ftn
+  BerzaZnanjaEmailSES:
+    Type: String
+    Default: arn:aws:ses:eu-central-1:335701030429:identity/berzaznanjars@gmail.com
+
 Globals:
   Function:
     Timeout: 10
     MemorySize: 128
-  Api:
-      Cors:
-        AllowHeaders: "'*'"
-        AllowMethods: "'*'"
-        AllowOrigin: "'*'"
+    Runtime: python3.8
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        FILES_BUCKET: !Ref AllFilesBacketName
+        USERS_TABLE: !Ref UsersTableName
+        FILES_TABLE: !Ref FilesTableName
+        INVITATIONS_TABLE: !Ref InvitationsTableName
+
 
 Resources:
-  RegistrationFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  ApiGatewayApi:
+      Type: AWS::Serverless::HttpApi
+      Properties:
+        StageName: Prod
+        CorsConfiguration:
+          AllowMethods:
+            - '*'
+          AllowOrigins:
+            - '*'
+          AllowHeaders:
+            - '*'
+        Auth:
+          Authorizers:
+            UsersCognitoAuthorizer:
+              IdentitySource: "$request.header.Authorization"
+              JwtConfiguration:
+                issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UsersCognitoUserPool}
+                audience:
+                  - !Ref UsersCognitoUserPoolClient
+  UsersCognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Ref UsersUserPoolName
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 6
+          RequireLowercase: True
+          RequireUppercase: True
+          RequireNumbers: True
+          RequireSymbols: False
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      Schema:
+        - AttributeDataType: String
+          Name: email
+          Mutable: True
+          Required: True
+        - AttributeDataType: String
+          Name: preferred_username
+          Mutable: True
+          Required: True
+        - AttributeDataType: String
+          Name: name
+          Mutable: True
+          Required: True
+        - AttributeDataType: String
+          Name: surname
+          Mutable: True
+          Required: False
+        - AttributeDataType: String
+          Name: birthday
+          Mutable: True
+          Required: False
+      VerificationMessageTemplate:
+        DefaultEmailOption: CONFIRM_WITH_LINK
+        EmailSubjectByLink: 'Lightning Cloud verification link'
+        EmailMessageByLink: 'Welcome to Lightning Cloud. Verify your email by clicking the link: {##Verify Email##}'
+      MfaConfiguration: 'OFF'
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: 'verified_email'
+            Priority: 1
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: False
+      EmailConfiguration:
+        EmailSendingAccount: DEVELOPER
+        From: Berza Znanja <berzaznanjars@gmail.com>
+        SourceArn: !Ref BerzaZnanjaEmailSES
+  UsersCognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UsersCognitoUserPool
+      ClientName: !Ref UsersUserPoolClientName
+      GenerateSecret: False
+  UsersUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Ref UsersUserPoolDomainName
+      UserPoolId: !Ref UsersCognitoUserPool
+  UsersDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      TableName: !Ref UsersTableName
+      AttributeDefinitions: 
+        - AttributeName: username
+          AttributeType: S
+      KeySchema: 
+        - AttributeName: username
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+  FilesDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      TableName: !Ref FilesTableName
+      AttributeDefinitions: 
+        - AttributeName: fileName
+          AttributeType: S
+        - AttributeName: owner
+          AttributeType: S
+      KeySchema: 
+        - AttributeName: fileName
+          KeyType: HASH
+        - AttributeName: owner
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+  InvitationsDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      TableName: !Ref InvitationsTableName
+      AttributeDefinitions: 
+        - AttributeName: id
+          AttributeType: S
+      KeySchema: 
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+  FilesAllBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref AllFilesBacketName
+  PostSignupLambda:
+    Type: 'AWS::Serverless::Function'
     Properties:
       CodeUri: registration/
       Handler: app.registration_lambda
-      Runtime: python3.8
-      Architectures:
-        - x86_64
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonDynamoDBFullAccess
       Events:
-        Registration:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+        PostConfirmation:
+          Type: Cognito
           Properties:
-            Path: /api/registration
-            Method: post
-  LoginFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: login/
-      Handler: app.login_lambda
-      Runtime: python3.8
-      Architectures:
-        - x86_64
-      Events:
-        Login:
-          Type: Api
-          Properties:
-            Path: /api/login
-            Method: post
+            UserPool: !Ref UsersCognitoUserPool
+            Trigger: PostConfirmation
   ChangeAvatarFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: change_avatar/
       Handler: app.change_avatar_lambda
-      Runtime: python3.8
-      Architectures:
-        - x86_64
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonDynamoDBFullAccess
       Events:
-        Login:
-          Type: Api
+        ApiGateway:
+          Type: HttpApi
           Properties:
             Path: /api/changeAvatar/{username}
             Method: put
+            ApiId: !Ref ApiGatewayApi
+            Auth:
+              Authorizer: UsersCognitoAuthorizer
   UploadFileFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: upload_file/
       Handler: app.upload_file_lambda
-      Runtime: python3.8
-      Architectures:
-        - x86_64
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonS3FullAccess
+        - AmazonDynamoDBFullAccess
       Events:
-        Login:
-          Type: Api
+        ApiGateway:
+          Type: HttpApi
           Properties:
             Path: /api/upload
             Method: post
-<<<<<<< Updated upstream
-
-Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  RegistrationApi:
-    Description: "API Gateway endpoint URL for Prod stage for Registration function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/api/registration/"
-  RegistrationFunction:
-    Description: "Registration Lambda Function ARN"
-    Value: !GetAtt RegistrationFunction.Arn
-  RegistrationFunctionIamRole:
-    Description: "Implicit IAM Role created for RegistrationFunction"
-    Value: !GetAtt RegistrationFunction.Arn
-=======
             ApiId: !Ref ApiGatewayApi
             Auth:
               Authorizer: UsersCognitoAuthorizer
@@ -126,4 +252,3 @@ Outputs:
             ApiId: !Ref ApiGatewayApi
             Auth:
               Authorizer: UsersCognitoAuthorizer
->>>>>>> Stashed changes

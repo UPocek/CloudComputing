@@ -6,6 +6,8 @@
 :root {
   --bgColor: rgb(0, 142, 239);
   --DarkGray: #333;
+  --Note: rgba(51, 51, 51, .3);
+  --LightNote: #EDEDF1;
   --AccentColor: #FEBE30;
 }
 

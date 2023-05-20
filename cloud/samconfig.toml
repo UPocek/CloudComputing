@@ -17,6 +17,10 @@ lint = true
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 resolve_s3 = true
+s3_prefix = "cloud"
+region = "eu-central-1"
+parameter_overrides = "AllFilesBacketName=\"cloud-every-file\" UsersTableName=\"CloudUsers\" FilesTableName=\"CloudFiles\" InvitationsTableName=\"CloudInvitations\" UsersUserPoolName=\"CloudUsers\" UsersUserPoolClientName=\"cloudusersacc\" UsersUserPoolDomainName=\"cloud-users-ftn\" BerzaZnanjaEmailSES=\"arn:aws:ses:eu-central-1:335701030429:identity/berzaznanjars@gmail.com\""
+image_repositories = []
 
 [default.package.parameters]
 resolve_s3 = true

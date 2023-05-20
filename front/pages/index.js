@@ -3,17 +3,12 @@ import { useEffect, useRef, useState } from "react"
 import Image from "next/image";
 import axios from "axios";
 import { baseUrl } from "./_app";
-
-var user = {}
+import AlbumCard from "@/components/album_card";
 
 export default function Home() {
-
-  useEffect(() => {
-    user = JSON.parse(localStorage.getItem('user')) || {};
-  }, []);
-
   return <>
     <Grid />
+    <AlbumCard />
   </>
 }
 
@@ -33,21 +28,15 @@ function Grid() {
   </>
 }
 
-function ProfileCard() {
+function ProfileCard({ user, setUser }) {
   const numberOfAvatars = 7;
-  const [avatarIndex, setAvatarIndex] = useState(null);
-
-  useEffect(() => {
-    setAvatarIndex(user && user['avatar'] ? user['avatar'] : get_new_random_avatar());
-  }, [user]);
+  const [avatarIndex, setAvatarIndex] = useState(user['avatar'] || get_new_random_avatar());
 
   function get_new_random_avatar() {
     return `${Math.random() < 0.5 ? 'm' : 'f'}${Math.floor(Math.random() * numberOfAvatars)}`;
   }
 
   function assign_new_avatar(new_avatar_name) {
-    user['avatar'] = new_avatar_name;
-    localStorage.setItem('user', JSON.stringify(user));
     setAvatarIndex(new_avatar_name);
     axios.put(`${baseUrl}/api/changeAvatar/${user['username']}`, { 'avatar': new_avatar_name })
   }
@@ -64,9 +53,6 @@ function ProfileCard() {
       </div>
       <div>
         <h2>{user['username'] || 'Anonimus'}</h2>
-      </div>
-      <div>
-        <h4>{user['email'] || ''}</h4>
       </div>
       <div>
         <h5>{`${user['name'] || ''} ${user['surname'] || ''}`}</h5>
