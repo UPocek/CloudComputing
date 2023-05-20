@@ -42,6 +42,7 @@ Globals:
         USERS_TABLE: !Ref UsersTableName
         FILES_TABLE: !Ref FilesTableName
         INVITATIONS_TABLE: !Ref InvitationsTableName
+        MAIN_ALBUM_NAME: !Ref "Main Album"
 
 
 Resources:
@@ -248,7 +249,25 @@ Resources:
           Type: HttpApi
           Properties:
             Path: /api/newAlbum
-            Method: get
+            Method: post
+            ApiId: !Ref ApiGatewayApi
+            Auth:
+              Authorizer: UsersCognitoAuthorizer
+  MoveFileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: move_file/
+      Handler: app.move_file
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonCognitoReadOnly
+        - AmazonDynamoDBFullAccess
+      Events:
+        ApiGateway:
+          Type: HttpApi
+          Properties:
+            Path: /api/move
+            Method: put
             ApiId: !Ref ApiGatewayApi
             Auth:
               Authorizer: UsersCognitoAuthorizer

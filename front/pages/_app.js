@@ -3,8 +3,8 @@ import { getUserAccessToken, getUserRefreshToken, logOut } from '@/helper/helper
 import '@/styles/globals.css'
 import axios from 'axios';
 
-// export const baseUrl = "http://127.0.0.1:3000";
-export const baseUrl = "https://w1888erzh6.execute-api.eu-central-1.amazonaws.com/Prod";
+export const baseUrl = "http://127.0.0.1:3000";
+// export const baseUrl = "https://w1888erzh6.execute-api.eu-central-1.amazonaws.com/Prod";
 
 axios.interceptors.request.use(
   config => {
