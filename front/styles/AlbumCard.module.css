@@ -37,6 +37,30 @@
     font-weight: 600;
 }
 
+.card h4 {
+    font-size: 1.1rem;
+    font-weight: 400;
+    opacity: .7;
+    letter-spacing: -.27px;
+    margin: 0;
+    margin-top: 20px;
+}
+
+.card input,
+.card textarea {
+    font-size: 1.1rem;
+    padding: 8px;
+    width: 100%;
+    border: 0px solid var(--bgColor);
+    border-radius: 6px;
+}
+
+.card input:focus,
+.card textarea:focus {
+    outline: none !important;
+    border: 2px solid var(--bgColor);
+}
+
 .grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -81,3 +105,67 @@
     color: var(--Note);
 }
 
+.prev_container{
+    margin: 0 auto;
+}
+
+.doc_nav{
+    display: flex;
+    padding: 1rem;
+    border-bottom: 1px solid var(--LightNote);
+    align-items: center;
+}
+
+.icon{
+    margin: 0.5rem;
+    cursor: pointer;
+}
+
+.doc_body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+.divider{
+    margin-left: auto;
+    display: flex;
+}
+
+.doc_prev{
+    display: flex;
+    justify-content: center;
+}
+
+.doc_details{
+    padding: 0 2rem;
+    margin-left: 3rem;
+}
+
+.back{
+    cursor: pointer;
+}
+
+.btns{
+    display: flex;
+}
+
+.submitDiv {
+    margin: 1rem 1rem;
+    width: 100%;
+    background-color: var(--bgColor);
+    border: 0px solid var(--bgColor);
+    border-radius: 6px;
+    padding: 5px;
+    color: aliceblue;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+}
+
+.cancle{
+    background-color: aliceblue;
+    background-color: aliceblue;
+    border: 0px solid aliceblue;
+    color: var(--DarkGray);
+}
