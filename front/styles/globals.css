@@ -35,8 +35,19 @@ form input {
 }
 
 form label {
-  display: block;
   margin: 0;
+}
+
+.actionBtn {
+  cursor: pointer;
+  background-color: var(--bgColor);
+}
+
+option,
+select {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 6px;
 }
 
 /* Header */
