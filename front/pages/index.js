@@ -162,7 +162,7 @@ function NewAlbumCard({ albums, setAlbums }) {
       alert("Enter album name first");
       return;
     }
-    axios.post(`${baseUrl}/api/newAlbum`, { 'albumName': albumName }).then(response => setAlbums({ ...albums, [albumName]: [] })).catch(err => alert("Album with that name already exists"));
+    axios.post(`${baseUrl}/api/album`, { 'albumName': albumName }).then(response => setAlbums({ ...albums, [albumName]: [] })).catch(err => alert("Album with that name already exists"));
   }
 
   return <div className={`${styles.card} ${styles.card_small}`}>
@@ -198,9 +198,18 @@ function AlbumCard({ albumName, album, albums, setAlbums }) {
     setSelectedDoc(index);
   }
 
+  function deleteAlbum() {
+    let newAlbums = JSON.parse(JSON.stringify(albums));
+    delete newAlbums[albumName];
+    setAlbums(newAlbums);
+
+    axios.delete(`${baseUrl}/api/album/${albumName}`)
+  }
+
   return <div className={`${styles.card} ${styles.card_extra_large}`}>
     <div className={styles.card_nav}>
       <h3>{albumName}</h3>
+      {albumName != 'Main Album' && <Image className={styles.nav_action} src='/images/delete_album.png' alt="Upload" width={40} height={40} onClick={deleteAlbum} />}
     </div>
     {preview ? <DocumentPreview setPreview={setPreview} index={selectedDoc} setAlbum={setAlbumContent} album={albumContent} albums={albums} albumName={albumName} setAlbums={setAlbums} /> :
       <div className={styles.grid_album}>
@@ -271,13 +280,15 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
 
     let newAlbums = JSON.parse(JSON.stringify(albums));
     if (albumName != 'Main Album') {
-      newAlbums[albumName] = newAlbums[albumName].filter(file => file['fileName'] != name);
+      const filesToKeep = newAlbums[albumName].filter(file => file['fileName'] != name);
+      newAlbums[albumName] = filesToKeep;
+      setAlbum(filesToKeep);
     }
 
     newAlbums[newAlbumSelected].push(album[index]);
     setAlbums(newAlbums);
 
-    axios.put(`${baseUrl}/api/`)
+    axios.put(`${baseUrl}/api/move`, { 'oldAlbum': albumName, 'newAlbum': newAlbumSelected, 'fileName': name }).then(response => setPreview(false)).catch();
   }
 
   return <div className={styles.prev_container}>
