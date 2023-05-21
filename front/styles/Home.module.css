@@ -287,7 +287,7 @@
 }
 
 .bottomDetails {
-    padding-top: 10px;
+    padding: 20px 0;
     border-top: 1px solid var(--DarkGray);
 }
 
@@ -302,4 +302,20 @@
     font-weight: bold;
     cursor: pointer;
     text-align: center;
+}
+
+.accessItem {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.accessItem p {
+    margin: 0;
+    padding: 5px 0;
+    margin-right: 10px;
+}
+
+.accessItem div {
+    cursor: pointer;
 }

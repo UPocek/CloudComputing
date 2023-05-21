@@ -42,8 +42,7 @@ Globals:
         USERS_TABLE: !Ref UsersTableName
         FILES_TABLE: !Ref FilesTableName
         INVITATIONS_TABLE: !Ref InvitationsTableName
-        MAIN_ALBUM_NAME: !Ref "Main Album"
-
+        MAIN_ALBUM_NAME: "Main Album"
 
 Resources:
   ApiGatewayApi:
@@ -302,7 +301,7 @@ Resources:
         ApiGateway:
           Type: HttpApi
           Properties:
-            Path: /api/update_file
+            Path: /api/updateFile
             Method: put
             ApiId: !Ref ApiGatewayApi
             Auth:
@@ -320,8 +319,44 @@ Resources:
         ApiGateway:
           Type: HttpApi
           Properties:
-            Path: /api/delete_file
+            Path: /api/deleteFile
             Method: delete
+            ApiId: !Ref ApiGatewayApi
+            Auth:
+              Authorizer: UsersCognitoAuthorizer
+  ShareFileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: share_file/
+      Handler: app.share_file
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonDynamoDBFullAccess
+        - AmazonCognitoReadOnly
+      Events:
+        ApiGateway:
+          Type: HttpApi
+          Properties:
+            Path: /api/shareFile
+            Method: put
+            ApiId: !Ref ApiGatewayApi
+            Auth:
+              Authorizer: UsersCognitoAuthorizer
+  RemoveFileAccessFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: remove_access/
+      Handler: app.remove_access
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonDynamoDBFullAccess
+        - AmazonCognitoReadOnly
+      Events:
+        ApiGateway:
+          Type: HttpApi
+          Properties:
+            Path: /api/removeAccess
+            Method: put
             ApiId: !Ref ApiGatewayApi
             Auth:
               Authorizer: UsersCognitoAuthorizer

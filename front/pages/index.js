@@ -237,7 +237,10 @@ function AlbumDocument({ index, showPreview, doc }) {
 function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName, setAlbums }) {
   const [tags, setTags] = useState(album[index]['tags']);
   const [comment, setComment] = useState(album[index]['description']);
-  const [newAlbumSelected, setNewAlbumSelected] = useState(albumName)
+  const [withAccess, setWithAccess] = useState(album[index]['haveAccess']);
+  const [newAlbumSelected, setNewAlbumSelected] = useState(albumName);
+  const [shareUsername, setShareUsername] = useState('');
+  const [invalidShareEmail, setInvalidShareEmail] = useState('');
 
   const [editing, setEditing] = useState(false)
 
@@ -249,7 +252,7 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
     }
 
     const filteredEditFile = Object.fromEntries(Object.entries(editedFile).filter(([_, v]) => v !== undefined));
-    axios.put(`${baseUrl}/api/update_file`, filteredEditFile, { params: { fileName: album[index]['fileName'], owner: album[index]['owner'] } }).then(_ => setNewValues()).catch(err => console.log(err));
+    axios.put(`${baseUrl}/api/updateFile`, filteredEditFile, { params: { fileName: album[index]['fileName'], owner: album[index]['owner'] } }).then(_ => setNewValues()).catch(err => console.log(err));
   }
 
   function setNewValues() {
@@ -268,7 +271,7 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
 
 
   function handleDelete() {
-    axios.delete(`${baseUrl}/api/delete_file`, { params: { fileName: album[index]['fileName'], owner: album[index]['owner'] } }).then(response => deleteFile()).catch(err => console.log(err));
+    axios.delete(`${baseUrl}/api/deleteFile`, { params: { fileName: album[index]['fileName'], owner: album[index]['owner'] } }).then(response => deleteFile()).catch(err => console.log(err));
   }
 
   function deleteFile() {
@@ -289,6 +292,11 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
     setAlbums(newAlbums);
 
     axios.put(`${baseUrl}/api/move`, { 'oldAlbum': albumName, 'newAlbum': newAlbumSelected, 'fileName': album[index]['fileName'] }).then(response => setPreview(false)).catch();
+  }
+
+  function shareFile() {
+    if (shareUsername == '') return;
+    axios.put(`${baseUrl}/api/shareFile`, { 'fileName': album[index]['fileName'], 'shareWith': shareUsername }).then(response => { setWithAccess([...withAccess, shareUsername]); setInvalidShareEmail(false); setShareUsername(''); }).catch(err => setInvalidShareEmail(true));
   }
 
   return <div className={styles.prev_container}>
@@ -348,7 +356,30 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
           </div>
           <button className={styles.submitBtn} onClick={moveToNewAlbum}>Move</button>
         </div>
+        <div className={styles.bottomDetails}>
+          <div className={styles.details}>
+            <h4>{`Share with (username)`}</h4>
+            <input type="text" id='share' name="share" value={shareUsername} onChange={e => setShareUsername(e.target.value)} />
+          </div>
+          <button className={styles.submitBtn} onClick={shareFile}>Share</button>
+          {invalidShareEmail && <p className="err">User with that username does not exist</p>}
+        </div>
+        <div className={styles.bottomDetails}>
+          <h4>People with access</h4>
+          {withAccess.map(personUsername => <AccessItem key={personUsername} personUsername={personUsername} fileAccess={album[index]['fileName']} withAccess={withAccess} setWithAccess={setWithAccess} />)}
+        </div>
       </div>
     </div>
+  </div>
+}
+
+function AccessItem({ personUsername, fileAccess, withAccess, setWithAccess }) {
+  function removeAccess() {
+    axios.put(`${baseUrl}/api/removeAccess`, { 'fileWithAccess': fileAccess, 'removeAccessTo': personUsername }).then(response => setWithAccess(withAccess.filter(person => person != personUsername))).catch();
+  }
+
+  return <div className={styles.accessItem}>
+    <p>{personUsername}</p>
+    <div onClick={removeAccess}><Image src='/images/close.png' alt="X" width={20} height={20} /></div>
   </div>
 }

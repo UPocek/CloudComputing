@@ -50,6 +50,10 @@ select {
   border-radius: 6px;
 }
 
+.err {
+  color: red;
+}
+
 /* Header */
 @media (max-width:1069px) {
 
