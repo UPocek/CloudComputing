@@ -22,7 +22,7 @@ def upload_file_lambda(event, context):
     user = users_table.get_item(Key={"username": user["preferred_username"]})["Item"]
 
     fileContent = body.get("fileContent")
-    fileName = body.get("fileName")
+    fileName = body.get("fileName").replace(",", "")
     fileType = body.get("fileType")
     fileSize = body.get("fileSize")
     fileCreated = body.get("fileCreated")

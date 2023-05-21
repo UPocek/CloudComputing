@@ -162,7 +162,7 @@ function NewAlbumCard({ albums, setAlbums }) {
       alert("Enter album name first");
       return;
     }
-    axios.post(`${baseUrl}/api/album`, { 'albumName': albumName }).then(response => setAlbums({ ...albums, [albumName]: [] })).catch(err => alert("Album with that name already exists"));
+    axios.post(`${baseUrl}/api/album`, { 'albumName': albumName }).then(response => { setAlbums({ ...albums, [albumName]: [] }); setAlbumName(''); }).catch(err => alert("Album with that name already exists"));
   }
 
   return <div className={`${styles.card} ${styles.card_small}`}>
@@ -174,7 +174,7 @@ function NewAlbumCard({ albums, setAlbums }) {
       <p className={styles.additionalTitle}>Create new empty album</p>
       <form onSubmit={createNewAlbum}>
         <label htmlFor="albumName">Album name</label>
-        <input type="text" name="albumName" id="albumName" onChange={(e) => setAlbumName(e.currentTarget.value)} />
+        <input type="text" name="albumName" id="albumName" value={albumName} onChange={(e) => setAlbumName(e.currentTarget.value)} />
         <input className="actionBtn" type="submit" value='Create' />
       </form>
     </div>
@@ -280,7 +280,7 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
 
     let newAlbums = JSON.parse(JSON.stringify(albums));
     if (albumName != 'Main Album') {
-      const filesToKeep = newAlbums[albumName].filter(file => file['fileName'] != name);
+      const filesToKeep = newAlbums[albumName].filter(file => file['fileName'] != album[index]['fileName']);
       newAlbums[albumName] = filesToKeep;
       setAlbum(filesToKeep);
     }
@@ -288,7 +288,7 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
     newAlbums[newAlbumSelected].push(album[index]);
     setAlbums(newAlbums);
 
-    axios.put(`${baseUrl}/api/move`, { 'oldAlbum': albumName, 'newAlbum': newAlbumSelected, 'fileName': name }).then(response => setPreview(false)).catch();
+    axios.put(`${baseUrl}/api/move`, { 'oldAlbum': albumName, 'newAlbum': newAlbumSelected, 'fileName': album[index]['fileName'] }).then(response => setPreview(false)).catch();
   }
 
   return <div className={styles.prev_container}>
