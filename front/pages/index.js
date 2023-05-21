@@ -182,7 +182,7 @@ function NewAlbumCard({ albums, setAlbums }) {
 }
 
 function getFileType(file) {
-  if (file.type.startsWith('image /')) return 'image';
+  if (file.type.startsWith('image/')) return 'image';
   if (file.type.startsWith('video/')) return 'video';
   if (file.type.startsWith('application/')) return 'document';
   return 'other';
@@ -229,7 +229,7 @@ function AlbumDocument({ index, showPreview, doc }) {
       </div>
       <div className={`${styles.file_data} ${!noBorderTop && styles.border_top}`}>
         <h4>{doc['fileName']}</h4>
-        <p> tip</p></div>
+        <p>{doc['fileType'].split('/')[1].toUpperCase()}</p></div>
     </div>
   </div>
 }
@@ -291,6 +291,23 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
     axios.put(`${baseUrl}/api/move`, { 'oldAlbum': albumName, 'newAlbum': newAlbumSelected, 'fileName': album[index]['fileName'] }).then(response => setPreview(false)).catch();
   }
 
+  function downloadDocument() {
+    axios.get(`${baseUrl}/api/download`, { params: { fileName: album[index]['fileName'], owner: album[index]['owner'] } }).then(response => handleDownload(response.data['content'])).catch(err => console.log(err));
+
+  }
+
+  function handleDownload(data) {
+    const fileData = Buffer.from(data, 'base64');
+    const fileBlob = new Blob([fileData], { type: album[index]['fileType'] }); // Create a Blob object from the byte array
+    const fileURL = URL.createObjectURL(fileBlob); // Create a URL for the Blob object
+
+    const link = document.createElement('a');
+    link.href = fileURL;
+    link.download = `${album[index]['fileName']}`;
+    document.body.appendChild(link);
+    link.click();
+  }
+
   return <div className={styles.prev_container}>
     <div className={styles.doc_nav}>
       <div className={styles.back} onClick={() => setPreview(false)}>
@@ -298,7 +315,7 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
       </div>
       <div className={styles.divider}>{album[index]['fileLastModefied']}</div>
       <div className={styles.divider}>
-        <div className={styles.icon}>
+        <div className={styles.icon} onClick={downloadDocument}>
           <Image src={'/images/download.png'} width={30} height={30} alt="doc" ></Image>
         </div>
         {album[index]['owner'] == getUserEmail() && <div className={styles.icon} onClick={() => setEditing(true)}>

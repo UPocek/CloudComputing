@@ -42,7 +42,7 @@ Globals:
         USERS_TABLE: !Ref UsersTableName
         FILES_TABLE: !Ref FilesTableName
         INVITATIONS_TABLE: !Ref InvitationsTableName
-        MAIN_ALBUM_NAME: !Ref "Main Album"
+        MAIN_ALBUM_NAME: "Main Album"
 
 
 Resources:
@@ -322,6 +322,23 @@ Resources:
           Properties:
             Path: /api/delete_file
             Method: delete
+            ApiId: !Ref ApiGatewayApi
+            Auth:
+              Authorizer: UsersCognitoAuthorizer
+  DownloadFileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: download_file/
+      Handler: app.download_file
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonS3FullAccess
+      Events:
+        ApiGateway:
+          Type: HttpApi
+          Properties:
+            Path: /api/download
+            Method: get
             ApiId: !Ref ApiGatewayApi
             Auth:
               Authorizer: UsersCognitoAuthorizer
