@@ -303,3 +303,43 @@
     cursor: pointer;
     text-align: center;
 }
+
+.accessItem {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.accessItem p {
+    margin: 0;
+    padding: 5px 0;
+    margin-right: 10px;
+}
+
+.accessItem div {
+    cursor: pointer;
+}
+
+.grid form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.grid form input {
+    max-width: 300px;
+    padding: 5px 10px;
+    border-radius: 6px;
+}
+
+.grid form label {
+    margin: 0;
+}
+
+.grid option,
+.grid select {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 6px;
+}

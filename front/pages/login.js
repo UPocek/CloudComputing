@@ -36,7 +36,7 @@ export default function LoginPage() {
                     <input className={styles.submitBtn} type="submit" value="Login" />
                 </div>
             </div>
-            {credentialsNotValid && <p>Credentials not valid. Try again.</p>}
+            {credentialsNotValid && <p className="err">Credentials not valid. Try again.</p>}
         </form>
     </div>
 }
