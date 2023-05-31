@@ -4,6 +4,8 @@ import os
 
 dynamodb_client = boto3.resource("dynamodb")
 files_table = dynamodb_client.Table(os.environ["FILES_TABLE"])
+sns_client = boto3.client("sns")
+file_updated_topic = os.environ["FILE_UPDATED_TOPIC"]
 
 
 def update_file(event, context):
@@ -13,11 +15,32 @@ def update_file(event, context):
         return bed_request("Required parameters missing")
 
     updates = get_attributes_for_update(event)
+
+    file_to_update = files_table.get_item(
+        Key={"fileName": fileName, "owner": owner}
+    ).get("Item")
+
+    if file_to_update is None or file_to_update.get("haveAccess") is None:
+        return bed_request("File does not exist")
+
+    sns_client.publish(
+        TopicArn=file_updated_topic,
+        Message=json.dumps(
+            {
+                "event": "update",
+                "subject": "File Successfully Updated",
+                "content": f"{fileName} has been updated by {owner}.",
+                "receivers": file_to_update["haveAccess"],
+            }
+        ),
+    )
     return successfull_update(update_file_dynamodb(updates, fileName, owner))
 
 
 def get_attributes_for_update(event):
     body = json.loads(event.get("body", {}))
+    if body.get("tags"):
+        body["tags"] = body["tags"].split(",")
     return dict(body)
 
 

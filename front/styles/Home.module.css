@@ -40,6 +40,11 @@
     cursor: pointer;
 }
 
+.nav_action_second {
+    cursor: pointer;
+    margin-left: 20px;
+}
+
 .card_large {
     grid-column: 2 / 4;
 }
@@ -80,7 +85,7 @@
     font-size: 1.1rem;
     padding: 8px;
     width: 100%;
-    border: 0px solid var(--bgColor);
+    border: 2px solid rgba(0, 0, 0, 0);
     border-radius: 6px;
 }
 
@@ -342,4 +347,16 @@
     padding: 5px 10px;
     border: none;
     border-radius: 6px;
+}
+
+.shareAlbum {
+    display: flex;
+    flex-direction: row;
+    margin-left: 20px;
+    justify-content: center;
+    align-items: center;
+}
+
+.shareAlbum input {
+    min-width: 200px;
 }

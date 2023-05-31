@@ -9,6 +9,8 @@ users_table = dynamodb_client.Table(os.environ["USERS_TABLE"])
 cognito_client = boto3.client("cognito-idp")
 s3_client = boto3.client("s3")
 bucket_name = os.environ["FILES_BUCKET"]
+sns_client = boto3.client("sns")
+file_uploaded_topic = os.environ["FILE_UPLOADED_TOPIC"]
 
 
 def upload_file_lambda(event, context):
@@ -16,6 +18,8 @@ def upload_file_lambda(event, context):
 
     if body.get("fileContent") is None:
         return bed_request("Missing required upload parameters")
+
+    albumName = event.get("queryStringParameters", {}).get("albumName")
 
     jwt_token = get_jwt_from_header(event)
     user = get_user_from_cognito(jwt_token)
@@ -32,7 +36,10 @@ def upload_file_lambda(event, context):
     owner = body.get("owner")
     haveAccsess = body.get("haveAccsess")
 
-    user["albums"][os.environ["MAIN_ALBUM_NAME"]].append(f"{owner},{fileName}")
+    album_to_add_file = (
+        os.environ["MAIN_ALBUM_NAME"] if albumName is None else albumName
+    )
+    user["albums"][album_to_add_file].append(f"{owner},{fileName}")
     users_table.put_item(Item=user)
 
     fileContent = fileContent.split(",")[1]
@@ -48,13 +55,25 @@ def upload_file_lambda(event, context):
             "tags": tags,
             "owner": owner,
             "haveAccess": haveAccsess,
-            "albums": ["Main Album"],
+            "albums": [],
         }
     )
     s3_client.put_object(
         Bucket=bucket_name,
         Key=f"{owner}/{fileName}",
         Body=base64.b64decode(fileContent),
+    )
+
+    sns_client.publish(
+        TopicArn=file_uploaded_topic,
+        Message=json.dumps(
+            {
+                "event": "upload",
+                "subject": "File Successfully Uploaded",
+                "content": f"{fileName} has been uploaded.",
+                "receivers": haveAccsess,
+            }
+        ),
     )
 
     return successfull_upload(body)

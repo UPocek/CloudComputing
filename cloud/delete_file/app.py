@@ -7,6 +7,8 @@ files_bucket_name = os.environ["FILES_BUCKET"]
 dynamodb_client = boto3.resource("dynamodb")
 files_table = dynamodb_client.Table(os.environ["FILES_TABLE"])
 users_table = dynamodb_client.Table(os.environ["USERS_TABLE"])
+sns_client = boto3.client("sns")
+file_deleted_topic = os.environ["FILE_DELETED_TOPIC"]
 
 
 def delete_file(event, context):
@@ -14,18 +16,32 @@ def delete_file(event, context):
     owner = event["queryStringParameters"].get("owner")
     if fileName is None or owner is None:
         return bed_request("Required parameters missing")
-    is_deleted = delete_one_file(fileName, owner)
+
+    file_to_delete = files_table.get_item(
+        Key={"fileName": fileName, "owner": owner}
+    ).get("Item")
+
+    if file_to_delete is None:
+        return bed_request("File doesn't exist")
+
+    is_deleted = delete_one_file(file_to_delete, fileName, owner)
+
+    sns_client.publish(
+        TopicArn=file_deleted_topic,
+        Message=json.dumps(
+            {
+                "event": "delete",
+                "subject": "File Successfully Deleted",
+                "content": f"{fileName} has been deleted by {owner}.",
+                "receivers": file_to_delete["haveAccess"],
+            }
+        ),
+    )
 
     return successfull({"fileName": fileName, "deleted": is_deleted})
 
 
-def delete_one_file(fileName, owner):
-    file_to_delete = files_table.get_item(
-        Key={"fileName": fileName, "owner": owner}
-    ).get("Item")
-    if file_to_delete is None:
-        return bed_request("File doesn't exist")
-
+def delete_one_file(file_to_delete, fileName, owner):
     users = file_to_delete["haveAccess"]
     delete_file_in_users(owner, users, fileName)
     delete_dynamodb(owner, fileName)

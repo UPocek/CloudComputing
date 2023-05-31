@@ -23,7 +23,7 @@ function Grid() {
       <div className={styles.grid}>
         <ProfileCard user={user} setUser={setUser} />
         <UploadDocumentCard user={user} albums={albums} setAlbums={setAlbums} />
-        {Object.keys(albums).map(albumName => <AlbumCard key={albumName} albumName={albumName} album={albums[albumName]} albums={albums} setAlbums={setAlbums} />)}
+        {Object.keys(albums).map(albumName => <AlbumCard key={albumName} albumName={albumName} album={albums[albumName]} albums={albums} setAlbums={setAlbums} user={user} />)}
         <NewAlbumCard albums={albums} setAlbums={setAlbums} />
       </div> : <div></div>}
   </>
@@ -75,9 +75,9 @@ function UploadDocumentCard({ user, albums, setAlbums }) {
     }
 
     const reader = new FileReader();
-    reader.addEventListener('load', (event) => {
+    reader.addEventListener('load', async (event) => {
       const content = event.target.result;
-      sendFile(content);
+      await sendFile(content);
     });
     reader.readAsDataURL(fileToUpload);
   }
@@ -88,11 +88,12 @@ function UploadDocumentCard({ user, albums, setAlbums }) {
     tagsRef.current.value = '';
     setFileToUpload(null);
     const response = await axios.post(`${baseUrl}/api/upload`, fileData);
-
-    let newAlbums = JSON.parse(JSON.stringify(albums));
-    newAlbums['Main Album'].push(response.data);
-
-    setAlbums(newAlbums);
+    if (response.status == 200) {
+      alert("File uploaded successfully")
+      let newAlbums = JSON.parse(JSON.stringify(albums));
+      newAlbums['Main Album'].push(response.data);
+      setAlbums(newAlbums);
+    }
   }
 
   function handleDragOver(event) {
@@ -188,10 +189,11 @@ function getFileType(file) {
   return 'other';
 }
 
-function AlbumCard({ albumName, album, albums, setAlbums }) {
-  const [preview, setPreview] = useState(false)
-  const [selectedDoc, setSelectedDoc] = useState(null)
-  const [albumContent, setAlbumContent] = useState(album)
+function AlbumCard({ albumName, album, albums, setAlbums, user }) {
+  const [preview, setPreview] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState(null);
+  const [albumContent, setAlbumContent] = useState(album);
+  const [shareAlbumWith, setShareAlbumWith] = useState("");
 
   function showPreview(index) {
     setPreview(true);
@@ -206,10 +208,40 @@ function AlbumCard({ albumName, album, albums, setAlbums }) {
     axios.delete(`${baseUrl}/api/album/${albumName}`)
   }
 
+  function uploadAdditionalFile(e) {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.addEventListener('load', async (event) => {
+      const content = event.target.result;
+      await sendFileAdditional(content, file);
+    });
+    reader.readAsDataURL(file);
+  }
+
+  async function sendFileAdditional(fileContent, file) {
+    const fileData = { 'fileContent': fileContent, 'fileName': file['name'], 'fileType': file['type'], 'fileSize': file['size'], 'fileCreated': new Date().toISOString(), 'fileLastModefied': new Date(file['lastModified']).toISOString(), 'description': "", 'tags': [], 'owner': user['username'], 'haveAccsess': [user['username']] };
+    const response = await axios.post(`${baseUrl}/api/upload?albumName=${albumName}`, fileData);
+    if (response.status == 200) {
+      alert(`File uploaded successfully to ${albumName}`);
+    }
+  }
+
+  function shareAlbum() {
+    if (shareAlbumWith.trim() != "") {
+      axios.post(`${baseUrl}/api/shareAlbum`, { 'albumName': albumName, 'shareWith': shareAlbumWith }).then(response => alert("Album shared")).catch(err => console.log("Error while sharing"));
+    }
+  }
+
   return <div className={`${styles.card} ${styles.card_extra_large}`}>
     <div className={styles.card_nav}>
       <h3>{albumName}</h3>
-      {albumName != 'Main Album' && <Image className={styles.nav_action} src='/images/delete_album.png' alt="Upload" width={40} height={40} onClick={deleteAlbum} />}
+      <div className={styles.shareAlbum}>
+        <input type="text" name="shareAlbum" placeholder="Share album with" value={shareAlbumWith} onChange={(e) => setShareAlbumWith(e.currentTarget.value)} />
+        <button className={styles.submitDiv} onClick={shareAlbum}>Share</button>
+      </div>
+      <input type="file" id={`file-selector-additional-${albumName}`} name={`file-selector-additional-${albumName}`} hidden onChange={uploadAdditionalFile} />
+      {<label className={styles.nav_action} htmlFor={`file-selector-additional-${albumName}`}><Image src='/images/upload.png' alt="Upload" width={40} height={40} /></label>}
+      {albumName != 'Main Album' && <Image className={styles.nav_action_second} src='/images/delete_album.png' alt="Delete" width={40} height={40} onClick={deleteAlbum} />}
     </div>
     {preview ? <DocumentPreview setPreview={setPreview} index={selectedDoc} setAlbum={setAlbumContent} album={albumContent} albums={albums} albumName={albumName} setAlbums={setAlbums} /> :
       <div className={styles.grid_album}>
@@ -229,7 +261,8 @@ function AlbumDocument({ index, showPreview, doc }) {
       </div>
       <div className={`${styles.file_data} ${!noBorderTop && styles.border_top}`}>
         <h4>{doc['fileName']}</h4>
-        <p>{doc['fileType'].split('/')[1].toUpperCase()}</p></div>
+        {doc['fileType'] && <p>{doc['fileType'].split('/')[1].toUpperCase()}</p>}
+      </div>
     </div>
   </div>
 }
@@ -247,35 +280,36 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
   function saveChanges(event) {
     event.preventDefault();
     const editedFile = {
-      'tags': (album[index]['tags'] != tags ? tags : undefined),
-      'description': (album[index]['description'] != confirm ? comment : undefined),
+      'tags': (JSON.stringify(album[index]['tags']) != JSON.stringify(tags.split(',')) ? tags : undefined),
+      'description': (album[index]['description'] != comment ? comment : undefined),
     }
 
     const filteredEditFile = Object.fromEntries(Object.entries(editedFile).filter(([_, v]) => v !== undefined));
-    axios.put(`${baseUrl}/api/updateFile`, filteredEditFile, { params: { fileName: album[index]['fileName'], owner: album[index]['owner'] } }).then(_ => setNewValues()).catch(err => console.log(err));
+    axios.put(`${baseUrl}/api/updateFile`, filteredEditFile, { params: { fileName: album[index]['fileName'], owner: album[index]['owner'] } }).then(_ => setNewValues()).catch(err => console.log("Error while edit"));
   }
 
   function setNewValues() {
-    const updatedDocuments = [...album]
-    updatedDocuments[index]['tags'] = tags;
+    const updatedDocuments = [...album];
+    updatedDocuments[index]['tags'] = tags.split(',');
     updatedDocuments[index]['description'] = comment;
-    setAlbum(updatedDocuments)
-    setEditing(false)
+    setAlbum(updatedDocuments);
+    setEditing(false);
   }
 
   function setCurrentValues() {
     setTags(album[index]['tags']);
     setComment(album[index]['description']);
-    setEditing(false)
+    setEditing(false);
   }
 
 
   function handleDelete() {
-    axios.delete(`${baseUrl}/api/deleteFile`, { params: { fileName: album[index]['fileName'], owner: album[index]['owner'] } }).then(response => deleteFile()).catch(err => console.log(err));
+    axios.delete(`${baseUrl}/api/deleteFile`, { params: { fileName: album[index]['fileName'], owner: album[index]['owner'] } }).then(response => deleteFile()).catch(err => console.log("Error while deleting"));
   }
 
   function deleteFile() {
-    setEditing(false)
+    setEditing(false);
+    setPreview(false);
   }
 
   function moveToNewAlbum() {
@@ -300,8 +334,8 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
 
   function handleDownload(data) {
     const fileData = Buffer.from(data, 'base64');
-    const fileBlob = new Blob([fileData], { type: album[index]['fileType'] }); // Create a Blob object from the byte array
-    const fileURL = URL.createObjectURL(fileBlob); // Create a URL for the Blob object
+    const fileBlob = new Blob([fileData], { type: album[index]['fileType'] });
+    const fileURL = URL.createObjectURL(fileBlob);
 
     const link = document.createElement('a');
     link.href = fileURL;
@@ -320,7 +354,7 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
       <div className={styles.back} onClick={() => setPreview(false)}>
         <Image src={'/images/left-arrow.png'} width={24} height={24} alt="back" ></Image>
       </div>
-      <div className={styles.divider}>{album[index]['fileLastModefied']}</div>
+      <div className={styles.divider}>{album[index]['fileLastModefied'].replace('Z', '').replace('T', ' ')}</div>
       <div className={styles.divider}>
         <div className={styles.icon} onClick={downloadDocument}>
           <Image src={'/images/download.png'} width={30} height={30} alt="doc" ></Image>
@@ -346,11 +380,11 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
           </div>
           <div className={styles.details}>
             <h4>{editing ? <label htmlFor="tags">{`Tags (comma-separated):`}</label> : 'Tags:'}</h4>
-            {editing ? <input type="text" id='tags' name="tags" value={tags} onChange={e => setTags(e.target.value)} /> : <p>{album[index]['tags']}</p>}
+            {editing ? <input type="text" id='tags' name="tags" value={tags} onChange={e => setTags(e.target.value)} /> : album[index]['tags'].length > 0 ? <p>{`#${album[index]['tags'].join(" #")}`}</p> : <p></p>}
           </div>
           <div className={styles.details}>
             <h4>{editing ? <label htmlFor="comment">Comment:</label> : 'Comment:'}</h4>
-            {editing ? <textarea rows="4" name="comment" value={comment} onChange={e => setComment(e.target.value)} /> : <p>{album[index]['comment']}</p>}
+            {editing ? <textarea rows="4" name="comment" value={comment} onChange={e => setComment(e.target.value)} /> : <p>{album[index]['description']}</p>}
           </div>
           <div className={styles.details}>
             {editing && <div className={styles.btns}>
@@ -372,18 +406,18 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
           </div>
           <button className={styles.submitBtn} onClick={moveToNewAlbum}>Move</button>
         </div>
-        <div className={styles.bottomDetails}>
+        {album[index]['owner'] == getUserEmail() && <div className={styles.bottomDetails}>
           <div className={styles.details}>
             <h4>{`Share with (username)`}</h4>
             <input type="text" id='share' name="share" value={shareUsername} onChange={e => setShareUsername(e.target.value)} />
           </div>
           <button className={styles.submitBtn} onClick={shareFile}>Share</button>
           {invalidShareEmail && <p className="err">User with that username does not exist</p>}
-        </div>
-        <div className={styles.bottomDetails}>
+        </div>}
+        {album[index]['owner'] == getUserEmail() && <div className={styles.bottomDetails}>
           <h4>People with access</h4>
           {withAccess.map(personUsername => <AccessItem key={personUsername} personUsername={personUsername} fileAccess={album[index]['fileName']} withAccess={withAccess} setWithAccess={setWithAccess} />)}
-        </div>
+        </div>}
       </div>
     </div>
   </div>
@@ -391,11 +425,13 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
 
 function AccessItem({ personUsername, fileAccess, withAccess, setWithAccess }) {
   function removeAccess() {
-    axios.put(`${baseUrl}/api/removeAccess`, { 'fileWithAccess': fileAccess, 'removeAccessTo': personUsername }).then(response => setWithAccess(withAccess.filter(person => person != personUsername))).catch();
+    axios.put(`${baseUrl}/api/removeAccess`, { 'fileWithAccess': fileAccess, 'removeAccessTo': personUsername })
+      .then(response => setWithAccess(withAccess.filter(person => person != personUsername)))
+      .catch(err => alert("Can't remove your own access"));
   }
 
   return <div className={styles.accessItem}>
     <p>{personUsername}</p>
-    <div onClick={removeAccess}><Image src='/images/close.png' alt="X" width={20} height={20} /></div>
+    {personUsername != getUserEmail() && <div onClick={removeAccess}><Image src='/images/close.png' alt="X" width={20} height={20} /></div>}
   </div>
 }

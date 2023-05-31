@@ -64,6 +64,25 @@ Resources:
                 issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UsersCognitoUserPool}
                 audience:
                   - !Ref UsersCognitoUserPoolClient
+  FileUploadedSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Protocol: lambda
+          Endpoint: !GetAtt NotifyUserOnFileActivity.Arn 
+  FileChangedSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Protocol: lambda
+          Endpoint: !GetAtt NotifyUserOnFileActivity.Arn 
+  FileDeletedSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Protocol: lambda
+          Endpoint: !GetAtt NotifyUserOnFileActivity.Arn 
+
   UsersCognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
@@ -203,10 +222,15 @@ Resources:
     Properties:
       CodeUri: upload_file/
       Handler: app.upload_file_lambda
+      Environment:
+        Variables:
+          FILE_UPLOADED_TOPIC: !Ref FileUploadedSNSTopic
       Policies:
         - AWSLambdaBasicExecutionRole
         - AmazonS3FullAccess
         - AmazonDynamoDBFullAccess
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt FileUploadedSNSTopic.TopicName
       Events:
         ApiGateway:
           Type: HttpApi
@@ -294,9 +318,14 @@ Resources:
     Properties:
       CodeUri: update_file/
       Handler: app.update_file
+      Environment:
+        Variables:
+          FILE_UPDATED_TOPIC: !Ref FileChangedSNSTopic
       Policies:
         - AWSLambdaBasicExecutionRole
         - AmazonDynamoDBFullAccess
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt FileChangedSNSTopic.TopicName
       Events:
         ApiGateway:
           Type: HttpApi
@@ -311,10 +340,15 @@ Resources:
     Properties:
       CodeUri: delete_file/
       Handler: app.delete_file
+      Environment:
+        Variables:
+          FILE_DELETED_TOPIC: !Ref FileDeletedSNSTopic
       Policies:
         - AWSLambdaBasicExecutionRole
         - AmazonDynamoDBFullAccess
         - AmazonS3FullAccess
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt FileDeletedSNSTopic.TopicName
       Events:
         ApiGateway:
           Type: HttpApi
@@ -377,3 +411,36 @@ Resources:
             ApiId: !Ref ApiGatewayApi
             Auth:
               Authorizer: UsersCognitoAuthorizer
+  ShareAlbumFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: share_album/
+      Handler: app.share_album
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonDynamoDBFullAccess
+        - AmazonCognitoReadOnly
+      Events:
+        ApiGateway:
+          Type: HttpApi
+          Properties:
+            Path: /api/shareAlbum
+            Method: post
+            ApiId: !Ref ApiGatewayApi
+            Auth:
+              Authorizer: UsersCognitoAuthorizer
+  NotifyUserOnFileActivity:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: notify/
+      Handler: app.notify
+      Policies:
+        - AmazonSESFullAccess
+  TopicConsumerFunction1Permission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref NotifyUserOnFileActivity
+      Principal: sns.amazonaws.com
+
+  
