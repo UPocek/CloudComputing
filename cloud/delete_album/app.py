@@ -62,7 +62,7 @@ def get_user_from_cognito(jwt):
 def delete_one_file(fileName, owner, album_name_to_delete):
     file_to_delete = files_table.get_item(
         Key={"fileName": fileName, "owner": owner["username"]}
-    ).get("Item")
+    )["Item"]
     if file_to_delete is None:
         return bed_request("File doesn't exist")
 

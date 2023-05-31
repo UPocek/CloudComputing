@@ -30,6 +30,10 @@ body {
   color: red;
 }
 
+.err {
+  color: red;
+}
+
 /* Header */
 @media (max-width:1069px) {
 
