@@ -43,27 +43,28 @@ Globals:
         FILES_TABLE: !Ref FilesTableName
         INVITATIONS_TABLE: !Ref InvitationsTableName
         MAIN_ALBUM_NAME: "Main Album"
+        BASE_URL: http://localhost:3000/
 
 Resources:
   ApiGatewayApi:
-      Type: AWS::Serverless::HttpApi
-      Properties:
-        StageName: Prod
-        CorsConfiguration:
-          AllowMethods:
-            - '*'
-          AllowOrigins:
-            - '*'
-          AllowHeaders:
-            - '*'
-        Auth:
-          Authorizers:
-            UsersCognitoAuthorizer:
-              IdentitySource: "$request.header.Authorization"
-              JwtConfiguration:
-                issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UsersCognitoUserPool}
-                audience:
-                  - !Ref UsersCognitoUserPoolClient
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: Prod
+      CorsConfiguration:
+        AllowMethods:
+          - '*'
+        AllowOrigins:
+          - '*'
+        AllowHeaders:
+          - '*'
+      Auth:
+        Authorizers:
+          UsersCognitoAuthorizer:
+            IdentitySource: "$request.header.Authorization"
+            JwtConfiguration:
+              issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UsersCognitoUserPool}
+              audience:
+                - !Ref UsersCognitoUserPoolClient
   FamilyRegistrationLogs:
     Type: AWS::Logs::LogGroup
   StateMachineExpressSync:
@@ -78,7 +79,7 @@ Resources:
         GiveAccessFunctionArn: !GetAtt GiveAccessFunction.Arn
       Events:
         ValidationApiEvent:
-          Type: Api
+          Type: HttpApi
           Properties:
             Method: post
             Path: /api/familyRegistration
@@ -539,5 +540,14 @@ Resources:
       Handler: app.give_access_to_family_member
       Policies:
         - AWSLambdaBasicExecutionRole
+        - AmazonDynamoDBFullAccess
+  SendFamilyInviteFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: family_invite/
+      Handler: app.family_invite
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonSESFullAccess
         - AmazonDynamoDBFullAccess
   
