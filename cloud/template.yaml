@@ -537,9 +537,6 @@ Resources:
     Properties:
       CodeUri: give_access_to_family_member/
       Handler: app.give_access_to_family_member
-      Environment:
-        Variables:
-          INVITE_ACCEPTED_TOPIC: !Ref FamilyRequestAcceptedSNSTopic
       Policies:
         - AWSLambdaBasicExecutionRole
         - AmazonDynamoDBFullAccess
