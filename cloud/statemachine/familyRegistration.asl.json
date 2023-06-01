@@ -1,0 +1,66 @@
+{
+    "Comment": "A state machine for family member registration",
+    "StartAt": "FamilyMemberRegistrationFunctionArn",
+    "States": {
+        "FamilyMemberRegistrationFunctionArn": {
+            "Type": "Task",
+            "Resource": "${FamilyMemberRegistrationFunctionArn}",
+            "Next": "CheckIfUserValid"
+        },
+        "CheckIfUserValid": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Variable": "$.status",
+                    "BooleanEquals": true,
+                    "Next": "NotifyInviterFunction"
+                }
+            ],
+            "Default": "UnsuccessfulRegistration"
+        },
+        "NotifyInviterFunction": {
+            "Type": "Task",
+            "Resource": "${NotifyInviterFunctionArn}",
+            "Next": "CheckForConfirmation"
+        },
+        "UnsuccessfulRegistration": {
+            "Type": "Pass",
+            "End": true
+        },
+        "CheckForConfirmation": {
+            "Type": "Task",
+            "Resource": "${CheckForConfirmationFunctionArn}",
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 60,
+                    "MaxAttempts": 2,
+                    "BackOfRate": 2
+                }
+            ],
+            "Next": "GiveAccessFunction"
+        },
+        "CheckIfUserAccepted": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Variable": "$.status",
+                    "BooleanEquals": true,
+                    "Next": "GiveAccessFunction"
+                }
+            ],
+            "Default": "RegisterWithoutAccess"
+        },
+        "RegisterWithoutAccess": {
+            "Type": "Pass",
+            "End": true
+        },
+        "GiveAccessFunction": {
+            "Type": "Task",
+            "Resource": "${GiveAccessFunctionArn}",
+            "End": true
+        }
+    }
+}

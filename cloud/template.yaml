@@ -64,6 +64,41 @@ Resources:
                 issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UsersCognitoUserPool}
                 audience:
                   - !Ref UsersCognitoUserPoolClient
+  FamilyRegistrationLogs:
+    Type: AWS::Logs::LogGroup
+  StateMachineExpressSync:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Name: StateMachineExpressSync
+      DefinitionUri: statemachine/familyRegistration.asl.json
+      DefinitionSubstitutions:
+        FamilyMemberRegistrationFunctionArn: !GetAtt FamilyMemberRegistrationFunction.Arn
+        NotifyInviterFunctionArn: !GetAtt NotifyInviterFunction.Arn
+        CheckForConfirmationFunctionArn: !GetAtt CheckForConfirmationFunction.Arn
+        GiveAccessFunctionArn: !GetAtt GiveAccessFunction.Arn
+      Events:
+        ValidationApiEvent:
+          Type: Api
+          Properties:
+            Method: post
+            Path: /api/familyRegistration
+            ApiId: !Ref ApiGatewayApi
+      Logging:
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt FamilyRegistrationLogs.Arn
+        IncludeExecutionData: true
+        Level: ALL
+      Policies:
+        - LambdaInvokePolicy:
+            FunctionName: !Ref FamilyMemberRegistrationFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref ValidatePropertyFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref ValidationSuccesfullFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref ValidationNotSuccesfullFunction
+        - CloudWatchLogsFullAccess
   FileUploadedSNSTopic:
     Type: AWS::SNS::Topic
     Properties:
@@ -82,7 +117,12 @@ Resources:
       Subscription:
         - Protocol: lambda
           Endpoint: !GetAtt NotifyUserOnFileActivity.Arn 
-
+  FamilyRequestAcceptedSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Protocol: lambda
+          Endpoint: !GetAtt NotifyUserOnInviteAccepted.Arn 
   UsersCognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
@@ -435,6 +475,7 @@ Resources:
       CodeUri: notify/
       Handler: app.notify
       Policies:
+        - AWSLambdaBasicExecutionRole
         - AmazonSESFullAccess
   TopicConsumerFunction1Permission:
     Type: 'AWS::Lambda::Permission'
@@ -442,5 +483,64 @@ Resources:
       Action: 'lambda:InvokeFunction'
       FunctionName: !Ref NotifyUserOnFileActivity
       Principal: sns.amazonaws.com
-
+  NotifyUserOnInviteAccepted:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: notify_request_accepted/
+      Handler: app.notify_request_accepted
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonSESFullAccess
+  TopicConsumerFunction2Permission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref NotifyUserOnInviteAccepted
+      Principal: sns.amazonaws.com
+  FamilyMemberRegistrationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: family_member_registration/
+      Handler: app.family_member_registration
+      Environment:
+        Variables:
+          USERS_USER_POOL: !Ref UsersCognitoUserPool
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonDynamoDBFullAccess
+        - AmazonCognitoReadOnly
+  NotifyInviterFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: invitation_accepted/
+      Handler: app.invitation_accepted
+      Environment:
+        Variables:
+          INVITE_ACCEPTED_TOPIC: !Ref FamilyRequestAcceptedSNSTopic
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt FamilyRequestAcceptedSNSTopic.TopicName
+  CheckForConfirmationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: check_for_confirmation/
+      Handler: app.check_for_confirmation
+      Environment:
+        Variables:
+          INVITE_ACCEPTED_TOPIC: !Ref FamilyRequestAcceptedSNSTopic
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonDynamoDBFullAccess
+  GiveAccessFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: give_access_to_family_member/
+      Handler: app.give_access_to_family_member
+      Environment:
+        Variables:
+          INVITE_ACCEPTED_TOPIC: !Ref FamilyRequestAcceptedSNSTopic
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonDynamoDBFullAccess
   
