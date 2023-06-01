@@ -3,6 +3,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    margin-top: 5vh;
 }
 
 .loader {
@@ -21,7 +22,7 @@
 }
 
 .loader:after {
-    box-shadow: 0 2px 0 #FF3D00 inset;
+    box-shadow: 0 2px 0 var(--LightNote) inset;
     animation: rotate 2s linear infinite;
 }
 

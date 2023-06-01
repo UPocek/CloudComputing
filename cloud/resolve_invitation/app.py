@@ -12,7 +12,12 @@ def resolve_invitation(event, context):
     if body.get("action") is None or body.get("invite") is None:
         return bed_request("Missing required parameters")
 
-    invitations_table.get_item(Key={"id": body["invite"]})
+    if body.get("action") != "accept" and body.get("action") != "deny":
+        return bed_request("Missing required parameters")
+
+    invitation = invitations_table.get_item(Key={"id": body["invite"]})
+    invitation["status"] = body["action"]
+    invitations_table.put_item(invitation)
 
     return successfull(body)
 
