@@ -65,12 +65,22 @@ Resources:
               issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UsersCognitoUserPool}
               audience:
                 - !Ref UsersCognitoUserPoolClient
+  MyApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors:
+        AllowMethods: "'POST'"
+        AllowHeaders: "'X-Forwarded-For'"
+        AllowOrigin: "'www.example.com'"
+        MaxAge: "'600'"
+        AllowCredentials: true
   FamilyRegistrationLogs:
     Type: AWS::Logs::LogGroup
-  StateMachineExpressSync:
+  StateMachineRegistration:
     Type: AWS::Serverless::StateMachine
     Properties:
-      Name: StateMachineExpressSync
+      Name: StateMachineRegistration
       DefinitionUri: statemachine/familyRegistration.asl.json
       DefinitionSubstitutions:
         FamilyMemberRegistrationFunctionArn: !GetAtt FamilyMemberRegistrationFunction.Arn
@@ -82,7 +92,7 @@ Resources:
           Type: Api
           Properties:
             Path: /api/resolveInvitation
-            Method: put
+            Method: post
             
       Logging:
         Destinations:

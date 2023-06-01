@@ -4,13 +4,17 @@ import os
 
 dynamodb_client = boto3.resource("dynamodb")
 invitations_table = dynamodb_client.Table(os.environ["INVITATIONS_TABLE"])
-base_url = os.environ["BASE_URL"]
 
 
 def resolve_invitation(event, context):
-    body = event["body"]
+    body = json.loads(event["body"])
 
-    invitations_table
+    if body.get("action") is None or body.get("invite") is None:
+        return bed_request("Missing required parameters")
+
+    invitations_table.get_item(Key={"id": body["invite"]})
+
+    return successfull(body)
 
 
 def bed_request(message):
@@ -19,7 +23,7 @@ def bed_request(message):
         "headers": {
             "Access-Control-Allow-Headers": "Content-Type",
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST",
+            "Access-Control-Allow-Methods": "PUT",
         },
         "body": json.dumps({"message": message}),
     }
@@ -31,7 +35,7 @@ def successfull(file):
         "headers": {
             "Access-Control-Allow-Headers": "Content-Type",
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST",
+            "Access-Control-Allow-Methods": "PUT",
         },
         "body": json.dumps(file),
     }
