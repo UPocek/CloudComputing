@@ -22,6 +22,7 @@ def user_details(event, context):
             file = dict(file)
             del file["fileSize"]
             files.append(file)
+        files = sorted(files, key=lambda x: x["fileCreated"], reverse=True)
         user["albums"][albumName] = files
 
     return successfull_upload(user)

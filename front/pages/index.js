@@ -32,6 +32,7 @@ function Grid() {
 function ProfileCard({ user, setUser }) {
   const numberOfAvatars = 7;
   const [avatarIndex, setAvatarIndex] = useState(user['avatar'] || get_new_random_avatar());
+  const [familyMember, setFamilyMember] = useState('')
 
   function get_new_random_avatar() {
     return `${Math.random() < 0.5 ? 'm' : 'f'}${Math.floor(Math.random() * numberOfAvatars)}`;
@@ -40,6 +41,15 @@ function ProfileCard({ user, setUser }) {
   function assign_new_avatar(new_avatar_name) {
     setAvatarIndex(new_avatar_name);
     axios.put(`${baseUrl}/api/changeAvatar/${user['username']}`, { 'avatar': new_avatar_name })
+  }
+
+  function inviteFamilyMember() {
+    axios.post(`${baseUrl}/api/familyInvite`, { 'inviter': getUserEmail(), 'family_member': familyMember }).then(response => handleInvitation(response)).catch(err => alert("Error invite family member!"))
+  }
+
+  function handleInvitation(response) {
+    alert("Succesfully invited family member!")
+    setFamilyMember('')
   }
 
   return <div className={`${styles.card} ${styles.card_small}`}>
@@ -57,6 +67,10 @@ function ProfileCard({ user, setUser }) {
       </div>
       <div>
         <h5>{`${user['name'] || ''} ${user['surname'] || ''}`}</h5>
+      </div>
+      <div className={styles.shareAlbum}>
+        <input type="text" name="inviteFamily" placeholder="Invite family member" value={familyMember} onChange={e => setFamilyMember(e.target.value)} />
+        <button className={styles.submitDiv} onClick={inviteFamilyMember}>Invite</button>
       </div>
     </div>
   </div>

@@ -553,6 +553,23 @@ Resources:
       Policies:
         - AWSLambdaBasicExecutionRole
         - AmazonDynamoDBFullAccess
+  SendFamilyInviteFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: family_invite/
+      Handler: app.family_invite
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonSESFullAccess
+        - AmazonDynamoDBFullAccess
+      Events:
+        ApiGateway:
+          Type: HttpApi
+          Properties:
+            Path: /api/familyInvite
+            Method: post
+            ApiId: !Ref ApiGatewayApi
+
   ResolveInvitationFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -569,4 +586,5 @@ Resources:
             Path: /api/resolveInvitation
             Method: put
             ApiId: !Ref ApiGatewayApi
+
   
