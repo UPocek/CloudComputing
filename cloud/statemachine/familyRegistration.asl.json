@@ -36,8 +36,8 @@
                         "States.TaskFailed"
                     ],
                     "IntervalSeconds": 60,
-                    "MaxAttempts": 2,
-                    "BackOfRate": 2
+                    "MaxAttempts": 5,
+                    "BackOffRate": 2
                 }
             ],
             "Next": "GiveAccessFunction"
