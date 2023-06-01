@@ -30,8 +30,8 @@ body {
   color: red;
 }
 
-.err {
-  color: red;
+.success {
+  color: green;
 }
 
 /* Header */

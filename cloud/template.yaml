@@ -42,28 +42,29 @@ Globals:
         USERS_TABLE: !Ref UsersTableName
         FILES_TABLE: !Ref FilesTableName
         INVITATIONS_TABLE: !Ref InvitationsTableName
-        MAIN_ALBUM_NAME: "Main Album"
+        MAIN_ALBUM_NAME: Main Album
+        BASE_URL: http://localhost:3000/
 
 Resources:
   ApiGatewayApi:
-      Type: AWS::Serverless::HttpApi
-      Properties:
-        StageName: Prod
-        CorsConfiguration:
-          AllowMethods:
-            - '*'
-          AllowOrigins:
-            - '*'
-          AllowHeaders:
-            - '*'
-        Auth:
-          Authorizers:
-            UsersCognitoAuthorizer:
-              IdentitySource: "$request.header.Authorization"
-              JwtConfiguration:
-                issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UsersCognitoUserPool}
-                audience:
-                  - !Ref UsersCognitoUserPoolClient
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: Prod
+      CorsConfiguration:
+        AllowMethods:
+          - '*'
+        AllowOrigins:
+          - '*'
+        AllowHeaders:
+          - '*'
+      Auth:
+        Authorizers:
+          UsersCognitoAuthorizer:
+            IdentitySource: "$request.header.Authorization"
+            JwtConfiguration:
+              issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UsersCognitoUserPool}
+              audience:
+                - !Ref UsersCognitoUserPoolClient
   FamilyRegistrationLogs:
     Type: AWS::Logs::LogGroup
   StateMachineExpressSync:
@@ -77,12 +78,12 @@ Resources:
         CheckForConfirmationFunctionArn: !GetAtt CheckForConfirmationFunction.Arn
         GiveAccessFunctionArn: !GetAtt GiveAccessFunction.Arn
       Events:
-        ValidationApiEvent:
+        ApiGateway:
           Type: Api
           Properties:
-            Method: post
-            Path: /api/familyRegistration
-            ApiId: !Ref ApiGatewayApi
+            Path: /api/resolveInvitation
+            Method: put
+            
       Logging:
         Destinations:
           - CloudWatchLogsLogGroup:
@@ -93,11 +94,11 @@ Resources:
         - LambdaInvokePolicy:
             FunctionName: !Ref FamilyMemberRegistrationFunction
         - LambdaInvokePolicy:
-            FunctionName: !Ref ValidatePropertyFunction
+            FunctionName: !Ref NotifyInviterFunction
         - LambdaInvokePolicy:
-            FunctionName: !Ref ValidationSuccesfullFunction
+            FunctionName: !Ref CheckForConfirmationFunction
         - LambdaInvokePolicy:
-            FunctionName: !Ref ValidationNotSuccesfullFunction
+            FunctionName: !Ref GiveAccessFunction
         - CloudWatchLogsFullAccess
   FileUploadedSNSTopic:
     Type: AWS::SNS::Topic
@@ -540,4 +541,20 @@ Resources:
       Policies:
         - AWSLambdaBasicExecutionRole
         - AmazonDynamoDBFullAccess
+  ResolveInvitationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: resolve_invitation/
+      Handler: app.resolve_invitation
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonDynamoDBFullAccess
+        - AmazonCognitoReadOnly
+      Events:
+        ApiGateway:
+          Type: HttpApi
+          Properties:
+            Path: /api/resolveInvitation
+            Method: put
+            ApiId: !Ref ApiGatewayApi
   
