@@ -65,7 +65,7 @@ Resources:
               issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UsersCognitoUserPool}
               audience:
                 - !Ref UsersCognitoUserPoolClient
-  MyApi:
+  ApiRestApi:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Prod
@@ -93,6 +93,8 @@ Resources:
           Properties:
             Path: /api/resolveInvitation
             Method: post
+            RestApiId:
+              Ref: ApiRestApi
             
       Logging:
         Destinations:
