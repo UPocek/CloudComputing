@@ -10,8 +10,9 @@ lighting_gallery_url = os.environ["BASE_URL"]
 
 
 def family_invite(event, context):
-    inviter = event["queryStringParameters"].get("inviter")
-    family_member = event["queryStringParameters"].get("family_member")
+    body = json.dumps(event["body"], {})
+    inviter = body.get("inviter")
+    family_member = body.get("family_member")
 
     if inviter is None or family_member is None:
         return bed_request("Missing required parameters.")
