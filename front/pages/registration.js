@@ -76,9 +76,9 @@ function isFormValid(inputs) {
 function registerNewUser(inputs, router, setFormInvalide) {
 
     if (inputs['invite'] != '') {
-        axios.post('', { 'username': inputs['email'], 'email': inputs['email'], 'preferred_username': inputs['username'], 'name': inputs['name'], 'custom:surname': inputs['surname'], 'custom:birthday': inputs['birthday'], 'inviter': inputs['invite'] })
+        axios.post('https://r7u7c2n6eh.execute-api.eu-central-1.amazonaws.com/Prod/api/resolveInvitation', { 'username': inputs['email'], 'email': inputs['email'], 'preferred_username': inputs['username'], 'name': inputs['name'], 'custom:surname': inputs['surname'], 'custom:birthday': inputs['birthday'], 'inviter': inputs['invite'] })
             .then(response => router.replace('/login'))
-            .catch(err => console.log(err));
+            .catch(err => router.replace('/login'));
         return;
     }
 

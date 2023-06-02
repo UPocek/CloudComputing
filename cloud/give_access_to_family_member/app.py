@@ -2,11 +2,9 @@ import boto3
 import json
 import os
 
-sns_client = boto3.client("sns")
 dynamodb_client = boto3.resource("dynamodb")
 users_table = dynamodb_client.Table(os.environ["USERS_TABLE"])
 files_table = dynamodb_client.Table(os.environ["FILES_TABLE"])
-invite_accepted_topic = os.environ["INVITE_ACCEPTED_TOPIC"]
 
 
 def give_access_to_family_member(event, context):
@@ -23,8 +21,9 @@ def give_access_to_family_member(event, context):
                 update_file(
                     file_name_to_share.split(",")[1],
                     inviter["username"],
-                    family_member,
+                    family_member["username"],
                 )
+    users_table.put_item(Item=family_member)
 
     return {"status": 200, "message": "ok"}
 

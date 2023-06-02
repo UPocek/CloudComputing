@@ -17,8 +17,10 @@ def check_for_confirmation(event, context):
     if invitation is None or invitation["status"] == "pending":
         raise Exception("Not yet confirmed")
 
+    print(invitation)
+
     return {
-        "status": invitation["status"] == "accepted",
-        "person_invited": person_invited,
+        "status": invitation["status"] == "accept",
         "inviter": inviter,
+        "person_invited": person_invited,
     }

@@ -58,11 +58,13 @@ function login(credentials, router, setCredentialsNotValid) {
             localStorage.setItem('refreshToken', data.refreshToken.token);
             router.replace('/');
         },
-        onFailure: (data) => {
+        onFailure: (err) => {
+            console.log(err);
             setCredentialsNotValid(true);
         },
         newPasswordRequired: (data) => {
-            setCredentialsNotValid(true);
+            console.log(data);
+            // router.replace('/');
         }
     });
 }

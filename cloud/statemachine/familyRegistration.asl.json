@@ -35,12 +35,12 @@
                     "ErrorEquals": [
                         "States.TaskFailed"
                     ],
-                    "IntervalSeconds": 60,
+                    "IntervalSeconds": 30,
                     "MaxAttempts": 5,
-                    "BackOffRate": 2
+                    "BackoffRate": 2
                 }
             ],
-            "Next": "GiveAccessFunction"
+            "Next": "CheckIfUserAccepted"
         },
         "CheckIfUserAccepted": {
             "Type": "Choice",

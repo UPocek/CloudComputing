@@ -10,7 +10,7 @@ lighting_gallery_url = os.environ["BASE_URL"]
 
 
 def family_invite(event, context):
-    body = json.dumps(event["body"], {})
+    body = json.loads(event["body"])
     inviter = body.get("inviter")
     family_member = body.get("family_member")
 
@@ -39,7 +39,7 @@ def family_invite(event, context):
     sender_email = "berzaznanjars@gmail.com"
     recipient_email = family_member
     subject = "Invitation to Lighting Gallery"
-    body = f'You are invited by {current_inviter["email"]} to join Lighting Gallery. Check it out at {lighting_gallery_url}.'
+    body = f'You are invited by {current_inviter["email"]} to join Lighting Gallery. Check it out at {lighting_gallery_url}/registration 🚀'
     response = ses_client.send_email(
         Source=sender_email,
         Destination={"ToAddresses": [recipient_email]},

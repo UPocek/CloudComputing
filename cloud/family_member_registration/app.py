@@ -11,7 +11,7 @@ users_user_pool = os.environ["USERS_USER_POOL"]
 
 
 def family_member_registration(event, context):
-    body = json.loads(event["body"])
+    body = event
 
     if (
         body is None
@@ -43,7 +43,7 @@ def family_member_registration(event, context):
                 {"Name": "email", "Value": body["email"]},
             ],
         )
-    except Exception:
+    except Exception as e:
         return {"status": False}
 
     newUser = {}
@@ -84,27 +84,3 @@ def get_random_avatar(user):
     else:
         letter = random.choice(["m", "f"])
     return letter + str(random.randint(0, 7))
-
-
-def bed_request(message):
-    return {
-        "statusCode": 400,
-        "headers": {
-            "Access-Control-Allow-Headers": "Content-Type",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST",
-        },
-        "body": json.dumps({"message": message}),
-    }
-
-
-def successfull(user):
-    return {
-        "statusCode": 200,
-        "headers": {
-            "Access-Control-Allow-Headers": "Content-Type",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST",
-        },
-        "body": json.dumps(user),
-    }

@@ -289,7 +289,7 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
   const [shareUsername, setShareUsername] = useState('');
   const [invalidShareEmail, setInvalidShareEmail] = useState('');
 
-  const [editing, setEditing] = useState(false)
+  const [editing, setEditing] = useState(false);
 
   function saveChanges(event) {
     event.preventDefault();

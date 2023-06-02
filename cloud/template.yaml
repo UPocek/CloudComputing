@@ -71,10 +71,9 @@ Resources:
       StageName: Prod
       Cors:
         AllowMethods: "'POST'"
-        AllowHeaders: "'X-Forwarded-For'"
-        AllowOrigin: "'www.example.com'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
         MaxAge: "'600'"
-        AllowCredentials: true
   FamilyRegistrationLogs:
     Type: AWS::Logs::LogGroup
   StateMachineRegistration:
@@ -95,7 +94,6 @@ Resources:
             Method: post
             RestApiId:
               Ref: ApiRestApi
-            
       Logging:
         Destinations:
           - CloudWatchLogsLogGroup:
@@ -521,7 +519,7 @@ Resources:
       Policies:
         - AWSLambdaBasicExecutionRole
         - AmazonDynamoDBFullAccess
-        - AmazonCognitoReadOnly
+        - AmazonCognitoPowerUser
   NotifyInviterFunction:
     Type: AWS::Serverless::Function
     Properties:
