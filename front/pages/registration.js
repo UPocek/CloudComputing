@@ -1,12 +1,14 @@
 import { useRef, useState } from "react"
 import styles from "../styles/Registration.module.css"
-import axios from "axios"
-import { baseUrl } from "./_app"
 import { useRouter } from "next/router";
+import UserPool from "@/helper/UserPool";
+import { CognitoUserAttribute } from "amazon-cognito-identity-js"
+import axios from "axios";
 
 export default function RegistrationPage() {
     const ref = useRef(null);
     const router = useRouter();
+    const [formInvalid, setFormInvalide] = useState(false);
 
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -14,13 +16,14 @@ export default function RegistrationPage() {
             "name": event.target.name.value,
             "surname": event.target.surname.value,
             "birthday": event.target.birthday.value,
-            "username": event.target.username.value,
+            "username": event.target.email.value,
             "email": event.target.email.value,
             "password": event.target.password.value,
+            "invite": event.target.invite.value
         }
 
         if (isFormValid(inputs)) {
-            registerNewUser(inputs, router)
+            registerNewUser(inputs, router, setFormInvalide)
         } else {
             alert("You didn't fill out the form properly. Try again.");
         }
@@ -47,32 +50,51 @@ export default function RegistrationPage() {
                     onBlur={() => (ref.current.type = "text")}></input>
             </div>
             <div className={styles.inputDiv}>
-                <input className={styles.inputField} type="text" id="username" name="username" placeholder="Username"></input>
-            </div>
-            <div className={styles.inputDiv}>
                 <input className={styles.inputField} type="email" id="email" name="email" placeholder="Email"></input>
             </div>
             <div className={styles.inputDiv}>
                 <input className={styles.inputField} type="password" id="password" name="password" placeholder="Password"></input>
             </div>
             <div className={styles.inputDiv}>
+                <input className={styles.inputField} type="text" id="invite" name="invite" placeholder="Invite (optional)"></input>
+            </div>
+            <div className={styles.inputDiv}>
                 <div className={styles.submitDiv}>
                     <input className={styles.submitBtn} type="submit" value="Register" />
                 </div>
             </div>
+            {formInvalid && <p className={styles.err}>Email already taken. Try another one.</p>}
         </form>
     </div>
 }
 
 function isFormValid(inputs) {
-    const requiredFields = ['name', 'surname', 'birthday', 'username', 'email', 'password'];
-    if (Object.values(inputs).includes("") || Object.values(inputs).includes(" ")) {
-        return false;
-    }
-
-    return true;
+    if (inputs['invite'] == '') return true;
+    return !(Object.values(inputs).includes("") || Object.values(inputs).includes(" "))
 }
 
-function registerNewUser(inputs, router) {
-    axios.post(`${baseUrl}/api/registration`, { 'newUser': inputs }).then((response) => { localStorage.setItem('user', JSON.stringify(response.data)); router.replace('/'); }).catch((err) => { alert(err) });
+function registerNewUser(inputs, router, setFormInvalide) {
+
+    if (inputs['invite'] != '') {
+        axios.post('https://r7u7c2n6eh.execute-api.eu-central-1.amazonaws.com/Prod/api/resolveInvitation', { 'username': inputs['email'], 'email': inputs['email'], 'preferred_username': inputs['username'], 'name': inputs['name'], 'custom:surname': inputs['surname'], 'custom:birthday': inputs['birthday'], 'inviter': inputs['invite'] })
+            .then(response => router.replace('/login'))
+            .catch(err => router.replace('/login'));
+        return;
+    }
+
+    const attributeList = [
+        new CognitoUserAttribute({ Name: 'preferred_username', Value: inputs['username'] }),
+        new CognitoUserAttribute({ Name: 'name', Value: inputs['name'] }),
+        new CognitoUserAttribute({ Name: 'custom:surname', Value: inputs['surname'] }),
+        new CognitoUserAttribute({ Name: 'custom:birthday', Value: inputs['birthday'] }),
+    ]
+    UserPool.signUp(inputs['email'], inputs['password'], attributeList, null, (err, data) => {
+        if (err) {
+            console.log(err)
+            setFormInvalide(true);
+        }
+        if (data) {
+            router.replace('/login');
+        }
+    });
 }

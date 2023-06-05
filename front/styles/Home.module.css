@@ -32,7 +32,7 @@
     overflow: hidden;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
-    height: 25%;
+    height: 90px;
 }
 
 .nav_action {
@@ -40,8 +40,17 @@
     cursor: pointer;
 }
 
+.nav_action_second {
+    cursor: pointer;
+    margin-left: 20px;
+}
+
 .card_large {
     grid-column: 2 / 4;
+}
+
+.card_extra_large {
+    grid-column: 1 / 4;
 }
 
 .card h2 {
@@ -76,7 +85,7 @@
     font-size: 1.1rem;
     padding: 8px;
     width: 100%;
-    border: 0px solid var(--bgColor);
+    border: 2px solid rgba(0, 0, 0, 0);
     border-radius: 6px;
 }
 
@@ -143,4 +152,211 @@
 
 .uploaded_file_info p {
     margin-top: auto;
+}
+
+.additionalTitle {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.grid_album {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin: 0 auto;
+    padding: 1rem 2rem;
+}
+
+.document {
+    display: flex;
+    align-items: center;
+    margin: 0 1rem;
+    padding: 0 1rem;
+    cursor: pointer;
+    border: 1px solid rgba(0, 0, 0, 0);
+}
+
+.document:hover {
+    background-color: var(--LightNote);
+    border: 1px solid var(--LightNote);
+    border-radius: 8px;
+}
+
+.file_data {
+    margin-left: 1rem;
+    width: 100%;
+    padding: 1rem 0;
+}
+
+.border_top {
+    border-top: 1px solid var(--LightNote);
+}
+
+.border_left {
+    border-left: 1px solid var(--LightNote);
+}
+
+.file_data h4 {
+    margin: 0;
+}
+
+.file_data p {
+    margin: 0;
+    color: var(--Note);
+}
+
+.prev_container {
+    margin: 0 auto;
+}
+
+.doc_nav {
+    display: flex;
+    padding: 1rem;
+    border-bottom: 1px solid var(--LightNote);
+    align-items: center;
+}
+
+.icon {
+    margin: 0.5rem;
+    cursor: pointer;
+}
+
+.doc_body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.divider {
+    margin-left: auto;
+    display: flex;
+}
+
+.doc_prev {
+    display: flex;
+    justify-content: center;
+}
+
+.doc_details {
+    padding: 0 2rem;
+    margin-left: 3rem;
+}
+
+.back {
+    cursor: pointer;
+}
+
+.btns {
+    display: flex;
+}
+
+.submitDiv {
+    margin: 1rem 1rem;
+    width: 100%;
+    background-color: var(--bgColor);
+    border: 0px solid var(--bgColor);
+    border-radius: 6px;
+    padding: 5px;
+    color: aliceblue;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+}
+
+.cancle {
+    background-color: aliceblue;
+    background-color: aliceblue;
+    border: 0px solid aliceblue;
+    color: var(--DarkGray);
+}
+
+.details {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.details h4,
+.details p {
+    margin: 0;
+}
+
+.doc_details h4 {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.topDetails {
+    margin-bottom: 10px;
+}
+
+.bottomDetails {
+    padding: 20px 0;
+    border-top: 1px solid var(--DarkGray);
+}
+
+.submitBtn {
+    margin-top: 10px;
+    width: 100%;
+    background-color: var(--bgColor);
+    border: 0px solid var(--bgColor);
+    border-radius: 6px;
+    padding: 5px;
+    color: var(--LightNote);
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+}
+
+.accessItem {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.accessItem p {
+    margin: 0;
+    padding: 5px 0;
+    margin-right: 10px;
+}
+
+.accessItem div {
+    cursor: pointer;
+}
+
+.grid form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.grid form input {
+    max-width: 300px;
+    padding: 5px 10px;
+    border-radius: 6px;
+}
+
+.grid form label {
+    margin: 0;
+}
+
+.grid option,
+.grid select {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 6px;
+}
+
+.shareAlbum {
+    display: flex;
+    flex-direction: row;
+    margin-left: 20px;
+    justify-content: center;
+    align-items: center;
+}
+
+.shareAlbum input {
+    min-width: 200px;
 }
