@@ -163,9 +163,9 @@ def delete_file_in_users(owner, users, file_name):
 def delete_file_metadata(owner, file_name, updated_users):
     try:
         file_meta_data = files_table.get_item(
-            Key={"fileName": file_name, "owner": owner}
+            Key={"fileName": file_name, "owner": owner["username"]}
         )
-        files_table.delete_item(Key={"fileName": file_name, "owner": owner})
+        files_table.delete_item(Key={"fileName": file_name, "owner": owner["username"]})
     except Exception as e:
         print(f"[ERROR]-Delete: {e}")
         rollback_updated_users(updated_users, file_name)
@@ -177,7 +177,7 @@ def delete_from_persistent_storage(owner, file_name, updated_users, file_meta_da
     try:
         return s3_client.delete_object(
             Bucket=files_bucket_name,
-            Key=f"{owner}/{file_name}",
+            Key=f"{owner['username']}/{file_name}",
         ).get("DeleteMarker", False)
     except Exception as e:
         print(f"[ERROR]-Delete: {e}")
