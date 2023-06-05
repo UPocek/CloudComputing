@@ -1,6 +1,7 @@
 import json
 import boto3
 import os
+import time
 
 dynamodb_client = boto3.resource("dynamodb")
 users_table = dynamodb_client.Table(os.environ["USERS_TABLE"])
@@ -22,24 +23,70 @@ def delete_album(event, context):
     album_name_to_delete = path_parameters["albumName"]
 
     jwt_token = get_jwt_from_header(event)
-    owner_of_the_file = get_user_from_cognito(jwt_token)
-    owner_of_the_file = users_table.get_item(
-        Key={"username": owner_of_the_file["preferred_username"]}
+    owner_of_the_album = get_user_from_cognito(jwt_token)
+    owner_of_the_album = users_table.get_item(
+        Key={"username": owner_of_the_album["preferred_username"]}
     )["Item"]
 
-    if owner_of_the_file["albums"].get(album_name_to_delete) is None:
+    if owner_of_the_album["albums"].get(album_name_to_delete) is None:
         return bed_request("Album with that name does not exist")
 
-    files_to_delete = owner_of_the_file["albums"][album_name_to_delete]
-    del owner_of_the_file["albums"][album_name_to_delete]
-    users_table.put_item(Item=owner_of_the_file)
+    album_to_delete = owner_of_the_album["albums"][album_name_to_delete]
+    del owner_of_the_album["albums"][album_name_to_delete]
+    users_table.put_item(Item=owner_of_the_album)
 
-    for file in files_to_delete:
-        file_owner_username, fileName = file.split(",")
-        if file_owner_username == owner_of_the_file["username"]:
-            delete_one_file(fileName, owner_of_the_file, album_name_to_delete)
+    files_remain = [file for file in album_to_delete]
+    for file in album_to_delete:
+        file_owner_username, file_name = file.split(",")
+        if file_owner_username == owner_of_the_album["username"]:
+            try:
+                delete_one_file(file_name, file_owner_username, owner_of_the_album)
+            except Exception as e:
+                print(f"[ERROR]-DeleteAlbum: {e}")
+                rollback_album_delete(
+                    owner_of_the_album, album_name_to_delete, files_remain
+                )
+                return server_error("Service unvailable.")
+        else:
+            try:
+                file_meta_data = files_table.get_item(
+                    Key={"fileName": file_name, "owner": file_owner_username}
+                ).get("Item")
+                file_meta_data["haveAccess"].remove(owner_of_the_album["username"])
+                files_table.put_item(Item=file_meta_data)
+            except Exception as e:
+                print(f"[ERROR]-DeleteAlbum: {e}")
+                rollback_album_delete(
+                    owner_of_the_album, album_name_to_delete, files_remain
+                )
+                return server_error("Service unvailable.")
 
-    return successfull_album_delete(owner_of_the_file)
+            try:
+                user = users_table.get_item(
+                    Key={"username": owner_of_the_album["username"]}
+                ).get("Item")
+                albums = {}
+                for key in user["albums"]:
+                    albums[key] = []
+                    for users_file_name in user["albums"][key]:
+                        if users_file_name != file_owner_username + "," + file_name:
+                            albums[key].append(users_file_name)
+                users_table.update_item(
+                    Key={"username": owner_of_the_album["username"]},
+                    UpdateExpression="SET albums = :albums",
+                    ExpressionAttributeValues={":albums": albums},
+                    ReturnValues="UPDATED_NEW",
+                ).get("Attributes")
+            except Exception as e:
+                print(f"[ERROR]-DeleteAlbum: {e}")
+                rollback_album_delete(
+                    owner_of_the_album, album_name_to_delete, files_remain
+                )
+                rollback_file_metadata(file_meta_data, owner_of_the_album)
+                return server_error("Service unvailable.")
+        files_remain.remove(file)
+
+    return successfull_album_delete(owner_of_the_album)
 
 
 def get_jwt_from_header(event):
@@ -59,51 +106,109 @@ def get_user_from_cognito(jwt):
     return current_user
 
 
-def delete_one_file(fileName, owner, album_name_to_delete):
+def rollback_album_delete(owner_of_the_file, album_name_to_delete, files_remain):
+    owner_of_the_file["albums"][album_name_to_delete] = files_remain
+    users_table.put_item(Item=owner_of_the_file)
+
+
+def rollback_file_metadata(file_meta_data, owner_of_the_file):
+    file_meta_data["haveAccess"].remove(owner_of_the_file["username"])
+    files_table.put_item(Item=file_meta_data)
+
+
+def delete_one_file(file_name, file_owner_username, owner):
     file_to_delete = files_table.get_item(
-        Key={"fileName": fileName, "owner": owner["username"]}
+        Key={"fileName": file_name, "owner": owner["username"]}
     )["Item"]
     if file_to_delete is None:
         return bed_request("File doesn't exist")
 
     users = file_to_delete["haveAccess"]
-    delete_file_in_users(owner, users, fileName, album_name_to_delete)
-    delete_dynamodb(owner, fileName)
-    return delete_s3(owner, fileName)
-
-
-def delete_file_in_users(owner, users, fileName, album_name_to_delete):
-    for username in users:
-        if username == owner["username"]:
-            user = owner
-        else:
-            user = users_table.get_item(Key={"username": username}).get("Item")
-        albums = {}
-        for key in user["albums"]:
-            if key == album_name_to_delete and username == owner["username"]:
-                continue
-            albums[key] = []
-            for userfileName in user["albums"][key]:
-                if userfileName != owner["username"] + "," + fileName:
-                    albums[key].append(userfileName)
-
-        users_table.update_item(
-            Key={"username": username},
-            UpdateExpression="SET albums = :albums",
-            ExpressionAttributeValues={":albums": albums},
-            ReturnValues="UPDATED_NEW",
-        )
-
-
-def delete_dynamodb(owner, fileName):
-    files_table.delete_item(Key={"fileName": fileName, "owner": owner["username"]})
-
-
-def delete_s3(owner, fileName):
-    s3_client.delete_object(
-        Bucket=files_bucket_name,
-        Key=f"{owner['username']}/{fileName}",
+    updated_users = delete_file_in_users(file_owner_username, users, file_name)
+    file_meta_data = delete_file_metadata(owner, file_name, updated_users)
+    return delete_from_persistent_storage(
+        owner, file_name, updated_users, file_meta_data
     )
+
+
+def delete_file_in_users(owner, users, file_name):
+    updated_users = []
+
+    try:
+        for username in users:
+            user = users_table.get_item(Key={"username": username}).get("Item")
+
+            albums = {}
+            for key in user["albums"]:
+                albums[key] = []
+                for user_file_name in user["albums"][key]:
+                    if user_file_name != owner + "," + file_name:
+                        albums[key].append(user_file_name)
+
+            users_table.update_item(
+                Key={"username": username},
+                UpdateExpression="SET albums = :albums",
+                ExpressionAttributeValues={":albums": albums},
+                ReturnValues="UPDATED_NEW",
+            ).get("Attributes")
+            updated_users.append(user)
+    except Exception as e:
+        print(f"[ERROR]-Delete: {e}")
+        time.sleep(3)
+        rollback_updated_users(updated_users, file_name)
+        raise Exception("Album delete failed")
+    return updated_users
+
+
+def delete_file_metadata(owner, file_name, updated_users):
+    try:
+        file_meta_data = files_table.get_item(
+            Key={"fileName": file_name, "owner": owner}
+        )
+        files_table.delete_item(Key={"fileName": file_name, "owner": owner})
+    except Exception as e:
+        print(f"[ERROR]-Delete: {e}")
+        rollback_updated_users(updated_users, file_name)
+        raise Exception("Album delete failed")
+    return file_meta_data
+
+
+def delete_from_persistent_storage(owner, file_name, updated_users, file_meta_data):
+    try:
+        return s3_client.delete_object(
+            Bucket=files_bucket_name,
+            Key=f"{owner}/{file_name}",
+        ).get("DeleteMarker", False)
+    except Exception as e:
+        print(f"[ERROR]-Delete: {e}")
+        rollback_updated_users(updated_users, file_name)
+        rollback_deleted_file_meta_data(file_meta_data)
+        raise Exception("Album delete failed")
+
+
+def rollback_deleted_file_meta_data(file_meta_data):
+    files_table.put_item(Item=file_meta_data)
+
+
+def rollback_updated_users(updated_users, file_name):
+    try:
+        for user in updated_users:
+            users_table.put_item(Item=user)
+    except Exception:
+        for user in updated_users:
+            print(f"[ERROR]-DeleteRollback: {user['username']} {file_name} ")
+
+
+def server_error(message):
+    return {
+        "statusCode": 503,
+        "headers": {
+            "Access-Control-Allow-Headers": "Content-Type",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "DELETE",
+        },
+        "body": json.dumps({"message": message}),
+    }
 
 
 def bed_request(message):
@@ -112,7 +217,7 @@ def bed_request(message):
         "headers": {
             "Access-Control-Allow-Headers": "Content-Type",
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST",
+            "Access-Control-Allow-Methods": "DELETE",
         },
         "body": json.dumps({"message": message}),
     }
@@ -124,7 +229,7 @@ def successfull_album_delete(file):
         "headers": {
             "Access-Control-Allow-Headers": "Content-Type",
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST",
+            "Access-Control-Allow-Methods": "DELETE",
         },
         "body": json.dumps(file),
     }

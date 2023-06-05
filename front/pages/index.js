@@ -39,12 +39,11 @@ function ProfileCard({ user, setUser }) {
   }
 
   function assign_new_avatar(new_avatar_name) {
-    setAvatarIndex(new_avatar_name);
-    axios.put(`${baseUrl}/api/changeAvatar/${user['username']}`, { 'avatar': new_avatar_name })
+    axios.put(`${baseUrl}/api/changeAvatar/${user['username']}`, { 'avatar': new_avatar_name }).then(response => setAvatarIndex(new_avatar_name)).catch(err => alert("Avatar could not be changed. Try again later."));
   }
 
   function inviteFamilyMember() {
-    axios.post(`${baseUrl}/api/familyInvite`, { 'inviter': getUserEmail(), 'family_member': familyMember }).then(response => handleInvitation(response)).catch(err => alert("Error invite family member!"))
+    axios.post(`${baseUrl}/api/familyInvite`, { 'inviter': getUserEmail(), 'family_member': familyMember }).then(response => handleInvitation(response)).catch(err => alert("Family member could not be invited. Try again later."))
   }
 
   function handleInvitation(response) {
@@ -219,7 +218,7 @@ function AlbumCard({ albumName, album, albums, setAlbums, user }) {
     delete newAlbums[albumName];
     setAlbums(newAlbums);
 
-    axios.delete(`${baseUrl}/api/album/${albumName}`)
+    axios.delete(`${baseUrl}/api/album/${albumName}`).then(response => alert("Album deleted sucessfully")).catch(err => alert("Service not available at this moment. Try again later."));
   }
 
   function uploadAdditionalFile(e) {
@@ -299,7 +298,7 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
     }
 
     const filteredEditFile = Object.fromEntries(Object.entries(editedFile).filter(([_, v]) => v !== undefined));
-    axios.put(`${baseUrl}/api/updateFile`, filteredEditFile, { params: { fileName: album[index]['fileName'], owner: album[index]['owner'] } }).then(_ => setNewValues()).catch(err => console.log("Error while edit"));
+    axios.put(`${baseUrl}/api/updateFile`, filteredEditFile, { params: { 'fileName': album[index]['fileName'], 'owner': album[index]['owner'] } }).then(_ => setNewValues()).catch(err => console.log("Error while edit. Try again later."));
   }
 
   function setNewValues() {
@@ -318,7 +317,7 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
 
 
   function handleDelete() {
-    axios.delete(`${baseUrl}/api/deleteFile`, { params: { fileName: album[index]['fileName'], owner: album[index]['owner'] } }).then(response => deleteFile()).catch(err => console.log("Error while deleting"));
+    axios.delete(`${baseUrl}/api/deleteFile`, { params: { 'fileName': album[index]['fileName'], 'owner': album[index]['owner'] } }).then(response => deleteFile()).catch(err => console.log("Error while deleting. Try again later."));
   }
 
   function deleteFile() {
@@ -339,11 +338,11 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
     newAlbums[newAlbumSelected].push(album[index]);
     setAlbums(newAlbums);
 
-    axios.put(`${baseUrl}/api/move`, { 'oldAlbum': albumName, 'newAlbum': newAlbumSelected, 'fileName': album[index]['fileName'] }).then(response => setPreview(false)).catch();
+    axios.put(`${baseUrl}/api/move`, { 'oldAlbum': albumName, 'newAlbum': newAlbumSelected, 'fileName': `${album[index]['owner']},${album[index]['fileName']}` }).then(response => setPreview(false)).catch(err => "Can't move file. Try again later.");
   }
 
   function downloadDocument() {
-    axios.get(`${baseUrl}/api/download`, { params: { fileName: album[index]['fileName'], owner: album[index]['owner'] } }).then(response => handleDownload(response.data['content'])).catch(err => console.log(err));
+    axios.get(`${baseUrl}/api/download`, { params: { 'fileName': album[index]['fileName'], 'owner': album[index]['owner'] } }).then(response => handleDownload(response.data['content'])).catch(err => 'File is not available at this moment. Try again later.');
   }
 
   function handleDownload(data) {
@@ -366,18 +365,18 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
   return <div className={styles.prev_container}>
     <div className={styles.doc_nav}>
       <div className={styles.back} onClick={() => setPreview(false)}>
-        <Image src={'/images/left-arrow.png'} width={24} height={24} alt="back" ></Image>
+        <Image src={'/images/left-arrow.png'} width={24} height={24} alt="back" />
       </div>
       <div className={styles.divider}>{album[index]['fileLastModefied'].replace('Z', '').replace('T', ' ')}</div>
       <div className={styles.divider}>
         <div className={styles.icon} onClick={downloadDocument}>
-          <Image src={'/images/download.png'} width={30} height={30} alt="doc" ></Image>
+          <Image src={'/images/download.png'} width={30} height={30} alt="doc" />
         </div>
         {album[index]['owner'] == getUserEmail() && <div className={styles.icon} onClick={() => setEditing(true)}>
-          <Image src={'/images/edit.png'} width={30} height={30} alt="doc" ></Image>
+          <Image src={'/images/edit.png'} width={30} height={30} alt="doc" />
         </div>}
         {album[index]['owner'] == getUserEmail() && <div className={styles.icon} onClick={handleDelete}>
-          <Image src={'/images/delete.png'} width={30} height={30} alt="doc" ></Image>
+          <Image src={'/images/delete.png'} width={30} height={30} alt="doc" />
         </div>}
       </div>
 
@@ -441,7 +440,7 @@ function AccessItem({ personUsername, fileAccess, withAccess, setWithAccess }) {
   function removeAccess() {
     axios.put(`${baseUrl}/api/removeAccess`, { 'fileWithAccess': fileAccess, 'removeAccessTo': personUsername })
       .then(response => setWithAccess(withAccess.filter(person => person != personUsername)))
-      .catch(err => alert("Can't remove your own access"));
+      .catch(err => alert("Can't remove your own access. Try again later."));
   }
 
   return <div className={styles.accessItem}>

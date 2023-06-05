@@ -23,18 +23,26 @@ def update_file(event, context):
     if file_to_update is None or file_to_update.get("haveAccess") is None:
         return bed_request("File does not exist")
 
-    sns_client.publish(
-        TopicArn=file_updated_topic,
-        Message=json.dumps(
-            {
-                "event": "update",
-                "subject": "File Successfully Updated",
-                "content": f"{fileName} has been updated by {owner}.",
-                "receivers": file_to_update["haveAccess"],
-            }
-        ),
-    )
-    return successfull_update(update_file_dynamodb(updates, fileName, owner))
+    new_metadata = update_file_metadata(updates, fileName, owner)
+    if new_metadata:
+        try:
+            sns_client.publish(
+                TopicArn=file_updated_topic,
+                Message=json.dumps(
+                    {
+                        "event": "update",
+                        "subject": "File Successfully Updated",
+                        "content": f"{fileName} has been updated by {owner}.",
+                        "receivers": file_to_update["haveAccess"],
+                    }
+                ),
+            )
+        except Exception as e:
+            print(f"[ERROR]-Update: {e}")
+    else:
+        return server_error("Service unavilable")
+
+    return successfull_update(new_metadata)
 
 
 def get_attributes_for_update(event):
@@ -44,7 +52,7 @@ def get_attributes_for_update(event):
     return dict(body)
 
 
-def update_file_dynamodb(updates, fileName, owner):
+def update_file_metadata(updates, fileName, owner):
     update_expression = "SET " + ", ".join(
         [f"{key} = :{key}" for key in updates.keys()]
     )
@@ -55,6 +63,18 @@ def update_file_dynamodb(updates, fileName, owner):
         ExpressionAttributeValues=expression_attribute_values,
         ReturnValues="UPDATED_NEW",
     ).get("Attributes")
+
+
+def server_error(message):
+    return {
+        "statusCode": 503,
+        "headers": {
+            "Access-Control-Allow-Headers": "Content-Type",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT",
+        },
+        "body": json.dumps({"message": message}),
+    }
 
 
 def bed_request(message):

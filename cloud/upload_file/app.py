@@ -16,7 +16,15 @@ file_uploaded_topic = os.environ["FILE_UPLOADED_TOPIC"]
 def upload_file_lambda(event, context):
     body = json.loads(event["body"])
 
-    if body.get("fileContent") is None:
+    if (
+        body.get("fileContent") is None
+        or body.get("fileName") is None
+        or body.get("owner") is None
+        or body.get("fileType") is None
+        or body.get("fileSize") is None
+        or body.get("fileCreated") is None
+        or body.get("fileLastModefied") is None
+    ):
         return bed_request("Missing required upload parameters")
 
     albumName = event.get("queryStringParameters", {}).get("albumName")
@@ -40,43 +48,72 @@ def upload_file_lambda(event, context):
         os.environ["MAIN_ALBUM_NAME"] if albumName is None else albumName
     )
     user["albums"][album_to_add_file].append(f"{owner},{fileName}")
-    users_table.put_item(Item=user)
+
+    try:
+        users_table.put_item(Item=user)
+    except Exception as e:
+        print(f"[ERROR]-Upload: {e}")
+        return server_error("Service unavilable")
+
+    try:
+        files_table.put_item(
+            Item={
+                "fileName": fileName,
+                "fileType": fileType,
+                "fileSize": fileSize,
+                "fileCreated": fileCreated,
+                "fileLastModefied": fileLastModefied,
+                "description": description,
+                "tags": tags,
+                "owner": owner,
+                "haveAccess": haveAccsess,
+                "albums": [],
+            }
+        )
+    except Exception as e:
+        print(f"[ERROR]-Upload: {e}")
+        rollback_user_table_insert(user, album_to_add_file, owner, fileName)
+        return server_error("Service unavilable")
 
     fileContent = fileContent.split(",")[1]
 
-    files_table.put_item(
-        Item={
-            "fileName": fileName,
-            "fileType": fileType,
-            "fileSize": fileSize,
-            "fileCreated": fileCreated,
-            "fileLastModefied": fileLastModefied,
-            "description": description,
-            "tags": tags,
-            "owner": owner,
-            "haveAccess": haveAccsess,
-            "albums": [],
-        }
-    )
-    s3_client.put_object(
-        Bucket=bucket_name,
-        Key=f"{owner}/{fileName}",
-        Body=base64.b64decode(fileContent),
-    )
+    try:
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=f"{owner}/{fileName}",
+            Body=base64.b64decode(fileContent),
+        )
+    except Exception as e:
+        print(f"[ERROR]-Upload: {e}")
+        rollback_user_table_insert(user, album_to_add_file, owner, fileName)
+        rollback_file_table_insert(fileName, owner)
+        return server_error("Service unavilable")
 
-    sns_client.publish(
-        TopicArn=file_uploaded_topic,
-        Message=json.dumps(
-            {
-                "event": "upload",
-                "subject": "File Successfully Uploaded",
-                "content": f"{fileName} has been uploaded.",
-                "receivers": haveAccsess,
-            }
-        ),
-    )
+    try:
+        sns_client.publish(
+            TopicArn=file_uploaded_topic,
+            Message=json.dumps(
+                {
+                    "event": "upload",
+                    "subject": "File Successfully Uploaded",
+                    "content": f"{fileName} has been uploaded.",
+                    "receivers": haveAccsess,
+                }
+            ),
+        )
+    except Exception as e:
+        print(f"[ERROR]-Upload: {e}")
 
     return successfull_upload(body)
+
+
+def rollback_user_table_insert(user, album_to_add_file, owner, fileName):
+    user["albums"][album_to_add_file].remove(f"{owner},{fileName}")
+    users_table.put_item(Item=user)
+
+
+def rollback_file_table_insert(fileName, owner):
+    files_table.delete_item(Key={"fileName": fileName, "owner": owner})
 
 
 def get_jwt_from_header(event):
@@ -94,6 +131,18 @@ def get_user_from_cognito(jwt):
     for attribute in user["UserAttributes"]:
         current_user[attribute["Name"].replace("custom:", "")] = attribute["Value"]
     return current_user
+
+
+def server_error(message):
+    return {
+        "statusCode": 503,
+        "headers": {
+            "Access-Control-Allow-Headers": "Content-Type",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST",
+        },
+        "body": json.dumps({"message": message}),
+    }
 
 
 def bed_request(message):

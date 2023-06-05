@@ -81,7 +81,7 @@ def bed_request(message):
         "headers": {
             "Access-Control-Allow-Headers": "Content-Type",
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "DELETE",
+            "Access-Control-Allow-Methods": "PUT",
         },
         "body": json.dumps({"message": message}),
     }
@@ -93,7 +93,7 @@ def successfull(file):
         "headers": {
             "Access-Control-Allow-Headers": "Content-Type",
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "DELETE",
+            "Access-Control-Allow-Methods": "PUT",
         },
         "body": json.dumps(file),
     }

@@ -51,7 +51,7 @@ def bed_request(message):
         "headers": {
             "Access-Control-Allow-Headers": "Content-Type",
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST",
+            "Access-Control-Allow-Methods": "GET",
         },
         "body": json.dumps({"message": message}),
     }
@@ -63,7 +63,7 @@ def successfull_upload(file):
         "headers": {
             "Access-Control-Allow-Headers": "Content-Type",
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST",
+            "Access-Control-Allow-Methods": "GET",
         },
         "body": json.dumps(file),
     }

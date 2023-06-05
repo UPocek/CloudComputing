@@ -1,6 +1,5 @@
 import json
 import boto3
-import base64
 import os
 
 dynamodb_client = boto3.resource("dynamodb")
@@ -28,8 +27,8 @@ def move_file(event, context):
     user = users_table.get_item(Key={"username": user["preferred_username"]})["Item"]
 
     if old_album != os.environ["MAIN_ALBUM_NAME"]:
-        user["albums"][old_album].remove(f"{user['username']},{file_name}")
-    user["albums"][new_album].append(f"{user['username']},{file_name}")
+        user["albums"][old_album].remove(file_name)
+    user["albums"][new_album].append(file_name)
     users_table.put_item(Item=user)
 
     return successfull_upload(body)
@@ -58,7 +57,7 @@ def bed_request(message):
         "headers": {
             "Access-Control-Allow-Headers": "Content-Type",
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST",
+            "Access-Control-Allow-Methods": "PUT",
         },
         "body": json.dumps({"message": message}),
     }
@@ -70,7 +69,7 @@ def successfull_upload(file):
         "headers": {
             "Access-Control-Allow-Headers": "Content-Type",
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST",
+            "Access-Control-Allow-Methods": "PUT",
         },
         "body": json.dumps(file),
     }
