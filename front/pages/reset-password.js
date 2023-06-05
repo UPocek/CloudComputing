@@ -15,14 +15,13 @@ export default function LoginPage() {
         if (username == '' || password == '') {
             alert("You didn't fill out the form properly. Try again.");
         } else {
-            login({ username: username, password: password }, router, setCredentialsNotValid)
+            resetPassword({ username: username, password: password }, router, setCredentialsNotValid)
         }
     }
     return <div className={styles.registrationDiv}>
         <form className={styles.registrationForm} onSubmit={handleSubmit}>
             <div className={styles.titleDiv}>
-                <h1>Login to <i>LightningGallery</i></h1>
-                <p>Enter your profile information here.</p>
+                <h1>Reset password</h1>
             </div>
 
             <div className={styles.inputDiv}>
@@ -41,30 +40,6 @@ export default function LoginPage() {
     </div>
 }
 
-function login(credentials, router, setCredentialsNotValid) {
-    const user = new CognitoUser({
-        Username: credentials['username'],
-        Pool: UserPool
-    });
-    const authDetails = new AuthenticationDetails({
-        Username: credentials['username'],
-        Password: credentials['password']
-    });
+function resetPassword(credentials, router, setCredentialsNotValid) {
 
-    user.authenticateUser(authDetails, {
-        onSuccess: (data) => {
-            localStorage.setItem('accessToken', data.accessToken.jwtToken);
-            localStorage.setItem('idToken', data.idToken.jwtToken);
-            localStorage.setItem('refreshToken', data.refreshToken.token);
-            router.replace('/');
-        },
-        onFailure: (err) => {
-            console.log(err);
-            setCredentialsNotValid(true);
-        },
-        newPasswordRequired: (data) => {
-            console.log(data);
-            router.replace('/reset-password');
-        }
-    });
 }
