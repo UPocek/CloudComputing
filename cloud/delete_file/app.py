@@ -25,34 +25,34 @@ def delete_file(event, context):
     if file_to_delete is None:
         return bed_request("File doesn't exist")
 
-    is_deleted = delete_one_file(file_to_delete, fileName, owner)
+    try:
+        delete_one_file(file_to_delete, fileName, owner)
+    except Exception as e:
+        return server_error("Service unvailable")
 
-    if is_deleted:
-        try:
-            sns_client.publish(
-                TopicArn=file_deleted_topic,
-                Message=json.dumps(
-                    {
-                        "event": "delete",
-                        "subject": "File Successfully Deleted",
-                        "content": f"{fileName} has been deleted by {owner}.",
-                        "receivers": file_to_delete["haveAccess"],
-                    }
-                ),
-            )
-        except Exception as e:
-            print(f"[ERROR]-Delete: {e}")
+    try:
+        sns_client.publish(
+            TopicArn=file_deleted_topic,
+            Message=json.dumps(
+                {
+                    "event": "delete",
+                    "subject": "File Successfully Deleted",
+                    "content": f"{fileName} has been deleted by {owner}.",
+                    "receivers": file_to_delete["haveAccess"],
+                }
+            ),
+        )
+    except Exception as e:
+        print(f"[ERROR]-Delete: {e}")
 
-    return successfull({"fileName": fileName, "deleted": is_deleted})
+    return successfull({"fileName": fileName})
 
 
 def delete_one_file(file_to_delete, file_name, owner):
     users = file_to_delete["haveAccess"]
     updated_users = delete_file_in_users(owner, users, file_name)
     file_meta_data = delete_file_metadata(owner, file_name, updated_users)
-    return delete_from_persistent_storage(
-        owner, file_name, updated_users, file_meta_data
-    )
+    delete_from_persistent_storage(owner, file_name, updated_users, file_meta_data)
 
 
 def delete_file_in_users(owner, users, file_name):
@@ -80,7 +80,7 @@ def delete_file_in_users(owner, users, file_name):
         print(f"[ERROR]-Delete: {e}")
         time.sleep(3)
         rollback_updated_users(updated_users, file_name)
-        return server_error("Service unvailable.")
+        raise Exception("File delete not sucessfull")
     return updated_users
 
 
@@ -91,6 +91,7 @@ def rollback_updated_users(updated_users, file_name):
     except Exception:
         for user in updated_users:
             print(f"[ERROR]-DeleteRollback: {user['username']} {file_name} ")
+        raise Exception("File delete not sucessfull")
 
 
 def delete_file_metadata(owner, file_name, updated_users):
@@ -102,13 +103,13 @@ def delete_file_metadata(owner, file_name, updated_users):
     except Exception as e:
         print(f"[ERROR]-Delete: {e}")
         rollback_updated_users(updated_users, file_name)
-        return server_error("Service unvailable.")
+        raise Exception("File delete not sucessfull")
     return file_meta_data
 
 
 def delete_from_persistent_storage(owner, file_name, updated_users, file_meta_data):
     try:
-        return s3_client.delete_object(
+        s3_client.delete_object(
             Bucket=files_bucket_name,
             Key=f"{owner}/{file_name}",
         ).get("DeleteMarker", False)
@@ -116,7 +117,7 @@ def delete_from_persistent_storage(owner, file_name, updated_users, file_meta_da
         print(f"[ERROR]-Delete: {e}")
         rollback_updated_users(updated_users, file_name)
         rollback_deleted_file_meta_data(file_meta_data)
-        return server_error("Service unvailable.")
+        raise Exception("File delete not sucessfull")
 
 
 def rollback_deleted_file_meta_data(file_meta_data):

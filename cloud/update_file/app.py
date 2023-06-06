@@ -46,9 +46,11 @@ def update_file(event, context):
 
 
 def get_attributes_for_update(event):
-    body = json.loads(event.get("body", {}))
+    body = json.loads(event.get("body"))
     if body.get("tags"):
         body["tags"] = body["tags"].split(",")
+        if body["tags"] == [""]:
+            body["tags"] = []
     return dict(body)
 
 

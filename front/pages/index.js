@@ -281,7 +281,7 @@ function AlbumDocument({ index, showPreview, doc }) {
 }
 
 function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName, setAlbums }) {
-  const [tags, setTags] = useState(album[index]['tags']);
+  const [tags, setTags] = useState(album[index]['tags'].join(','));
   const [comment, setComment] = useState(album[index]['description']);
   const [withAccess, setWithAccess] = useState(album[index]['haveAccess']);
   const [newAlbumSelected, setNewAlbumSelected] = useState(albumName);
@@ -293,7 +293,7 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
   function saveChanges(event) {
     event.preventDefault();
     const editedFile = {
-      'tags': (JSON.stringify(album[index]['tags']) != JSON.stringify(tags.split(',')) ? tags : undefined),
+      'tags': (album[index]['tags'].join(',') != tags ? tags : undefined),
       'description': (album[index]['description'] != comment ? comment : undefined),
     }
 
@@ -310,7 +310,7 @@ function DocumentPreview({ index, setPreview, setAlbum, album, albums, albumName
   }
 
   function setCurrentValues() {
-    setTags(album[index]['tags']);
+    setTags(album[index]['tags'].join(','));
     setComment(album[index]['description']);
     setEditing(false);
   }
