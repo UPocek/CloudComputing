@@ -11,9 +11,12 @@ def notify(event, context):
         sender_email = "berzaznanjars@gmail.com"
         recipient_email = receiver
         subject = body["subject"]
-        body = body["content"]
+        content_body = body["content"]
         response = ses_client.send_email(
             Source=sender_email,
             Destination={"ToAddresses": [recipient_email]},
-            Message={"Subject": {"Data": subject}, "Body": {"Text": {"Data": body}}},
+            Message={
+                "Subject": {"Data": subject},
+                "Body": {"Text": {"Data": content_body}},
+            },
         )
